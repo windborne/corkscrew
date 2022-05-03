@@ -1,0 +1,20 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    net-ssh (6.1.0)
+    parslet (2.0.0)
+    rb_json5 (0.3.0)
+      parslet (~> 2.0)
+
+PLATFORMS
+  x86_64-darwin-20
+
+DEPENDENCIES
+  net-ssh
+  rb_json5
+
+RUBY VERSION
+   ruby 3.0.3p157
+
+BUNDLED WITH
+   2.2.32
