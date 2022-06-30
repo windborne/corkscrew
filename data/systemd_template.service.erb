@@ -1,0 +1,15 @@
+[Unit]
+Description="<%= @config.name %>"
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+RuntimeMaxSec=86400
+User=<%= @config.run_user %>
+WorkingDirectory=<%= @config.deploy_path %>
+ExecStart=<%= @config.run %>
+
+[Install]
+WantedBy=multi-user.target

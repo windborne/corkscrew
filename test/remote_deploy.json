@@ -1,5 +1,5 @@
 {
-  "name": "dumb_server_local",
+  "name": "dumb_server_remote",
   "run": "ruby dumb_server.rb",
   "root": "./dumb_server",
   "deploy_path": "/srv/corkscrew/dumb_server",

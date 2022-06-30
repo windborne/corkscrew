@@ -1,4 +1,4 @@
-require 'open3'
+require_relative './command_runner'
 
 module Corkscrew
   class Syncer
@@ -7,9 +7,9 @@ module Corkscrew
 
     end
 
-    def initialize(config, remote_runner)
+    def initialize(config, command_runner)
       @config = config
-      @remote_runner = remote_runner
+      @command_runner = command_runner
     end
 
     def sync
@@ -19,13 +19,13 @@ module Corkscrew
       unless @config.local?
         raise SyncError, 'SSH config is required to sync code remotely' if @config.ssh.nil?
 
-        @remote_runner.run_command "sudo mkdir -p #{destination}"
-        @remote_runner.run_command "sudo chown -R #{@config.ssh['user']} #{destination}"
+        @command_runner.run_command "sudo mkdir -p #{destination}", print_output: false
+        @command_runner.run_command "sudo chown -R #{@config.ssh['user']} #{destination}", print_output: false
 
         destination = "#{@config.ssh['user']}@#{@config.ssh['host']}:#{destination}"
       end
 
-      source = File.absolute_path(File.join(@config.config_directory, @config.root))
+      source = @config.root_dir
       source += '/' unless source.end_with?('.') || source.end_with?('/')
 
       flags = [
@@ -39,16 +39,7 @@ module Corkscrew
 
       puts "Syncing #{source} to #{destination}"
 
-      Open3.popen2e('rsync', *flags, source, destination) do |stdin, stdout_stderr, wait_thread|
-        Thread.new do
-          stdout_stderr.each {|l| puts l }
-        end
-
-        stdin.puts 'ls'
-        stdin.close
-
-        wait_thread.value
-      end
+      CommandRunner.run_locally 'rsync', *flags, source, destination
     end
 
   end

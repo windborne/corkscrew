@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+cp <%= "#{@config.name}.service" %> /etc/systemd/system
+systemctl enable <%= @config.name %>
+systemctl start <%= @config.name %>
+
+echo "Installation complete!"

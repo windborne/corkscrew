@@ -1,5 +1,6 @@
 {
   "service_manager": "systemd",
   "sync": "rsync",
-  "root": "."
+  "root": ".",
+  "install": "install.sh"
 }

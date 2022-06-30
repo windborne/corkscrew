@@ -2,5 +2,6 @@
   "name": "dumb_server_local",
   "run": "ruby dumb_server.rb",
   "root": "./dumb_server",
-  "deploy_path": "/Users/kai/Desktop/dumb_server"
+  "deploy_path": "/Users/kai/Desktop/dumb_server",
+  "service_manager": "screen"
 }
