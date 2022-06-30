@@ -5,6 +5,7 @@ GEM
     parslet (2.0.0)
     rb_json5 (0.3.0)
       parslet (~> 2.0)
+    rsync (1.0.9)
 
 PLATFORMS
   x86_64-darwin-20
@@ -12,6 +13,7 @@ PLATFORMS
 DEPENDENCIES
   net-ssh
   rb_json5
+  rsync
 
 RUBY VERSION
    ruby 3.0.3p157

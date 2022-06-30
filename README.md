@@ -17,7 +17,7 @@ Configuration lives in `corkscrew.json`.
 
 ```json5
 {
-  "name": "your_service", // REQUIRED
+  "name": "your_service", // REQUIRED. Should be snake case
   "run": "start_server.sh", // the run script. May be a file or a bash command. REQUIRED
   "service_manager": "systemd", // may be systemd or screen. Optional, defaults to systemd
   "root": ".", // the root of the code you want to deploy. Optional, defaults to current repo
@@ -26,7 +26,7 @@ Configuration lives in `corkscrew.json`.
     "host": "a.windbornesystems.com",
     "user": "windborne"
   },
-  "deploy_path": "/srv/", // where to sync the code to on the remote host. Optional, but if not provided you won't be able to deploy
+  "deploy_path": "/srv/", // where to sync the code to on the remote host. If not provided, you won't be able to deploy
   "install": "install.sh", // the install script. May be a file or a bash command. Optional
   "build": "build.sh", // the build script. May be a file or a bash command. Optional
 }

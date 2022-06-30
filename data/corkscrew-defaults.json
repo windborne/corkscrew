@@ -1,4 +1,5 @@
 {
   "service_manager": "systemd",
-  "sync": "rsync"
+  "sync": "rsync",
+  "root": "."
 }
