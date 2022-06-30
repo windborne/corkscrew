@@ -8,7 +8,7 @@ module Corkscrew
     def initialize(config_path=nil, options={})
       @config = Corkscrew::Config.new config_path, options
       @remote_runner = Corkscrew::RemoteRunner.new @config
-      @syncer = Corkscrew::Syncer.new @config
+      @syncer = Corkscrew::Syncer.new @config, @remote_runner
     end
 
     def deploy

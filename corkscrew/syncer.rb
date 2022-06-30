@@ -7,8 +7,9 @@ module Corkscrew
 
     end
 
-    def initialize(config)
+    def initialize(config, remote_runner)
       @config = config
+      @remote_runner = remote_runner
     end
 
     def sync
@@ -18,6 +19,9 @@ module Corkscrew
       unless @config.local?
         raise SyncError, 'SSH config is required to sync code remotely' if @config.ssh.nil?
 
+        @remote_runner.run_command "sudo mkdir -p #{destination}"
+        @remote_runner.run_command "sudo chown -R #{@config.ssh['user']} #{destination}"
+
         destination = "#{@config.ssh['user']}@#{@config.ssh['host']}:#{destination}"
       end
 
@@ -26,8 +30,8 @@ module Corkscrew
 
       flags = [
         '-avzhP',
-        "--include=**.gitignore",
-        "--exclude=/.git",
+        '--include=**.gitignore',
+        '--exclude=/.git',
         '--filter=:- .gitignore',
         '--delete-after',
         '--delete'

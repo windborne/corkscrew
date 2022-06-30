@@ -1,0 +1,10 @@
+{
+  "name": "dumb_server_local",
+  "run": "ruby dumb_server.rb",
+  "root": "./dumb_server",
+  "deploy_path": "/srv/corkscrew/dumb_server",
+  "ssh": {
+    "host": "a.windbornesystems.com",
+    "user": "windborne"
+  }
+}
