@@ -25,7 +25,7 @@ module Corkscrew
         destination = "#{@config.ssh['user']}@#{@config.ssh['host']}:#{destination}"
       end
 
-      source = File.absolute_path(@config.root)
+      source = File.absolute_path(File.join(@config.config_directory, @config.root))
       source += '/' unless source.end_with?('.') || source.end_with?('/')
 
       flags = [

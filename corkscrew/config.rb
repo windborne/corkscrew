@@ -4,11 +4,15 @@ module Corkscrew
   class Config
 
     def initialize(config_path = nil, options={})
-      config_path = 'corkscrew.json' if config_path.nil?
+      @config_path = config_path || 'corkscrew.json'
 
       @options = options.transform_keys(&:to_sym)
-      @raw = ::RbJSON5.parse(File.read(config_path))
+      @raw = ::RbJSON5.parse(File.read(@config_path))
       @defaults = ::RbJSON5.parse(File.read(File.join(__dir__,  '..', 'data', 'corkscrew-defaults.json')))
+    end
+
+    def config_directory
+      File.dirname @config_path
     end
 
     def local?

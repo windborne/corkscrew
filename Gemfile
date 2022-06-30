@@ -8,3 +8,6 @@ gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 
 # JSON5 parsing
 gem 'rb_json5'
+
+# command line fun
+gem 'thor'
