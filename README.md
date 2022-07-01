@@ -56,7 +56,22 @@ A common path is to run `corkscrew generate` once at the beginning of the projec
 ## Best practices
 - Make your install script idempotent so that you can update it then run `corkscrew install` again safely
 
-## Philosophies
+## Development
+### Philosophies
 1. Minimum effort. Things should just work without you having to worry about how; there should be sane defaults for everything we can manage
 2. Delegation to existing tools. We don't need to re-invent systemd; instead, we should delegate as much work as possible to core unix utilities.  
 3. Compatibility with existing tools. You should be able to deploy completely manually and not have it break things, and also be able to go outside the system whenever you want
+
+### Packaging a new version
+Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/phusion/traveling-ruby).
+This enables us to distribute an executable without any dependencies: users don't need to worry about installing ruby or anything else.
+Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
+To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20210107](traveling-ruby/shared/gemfiles/20210107)) modified.
+
+To build, run either `rake package:osx` or `rake package:linux:x86_64`.
+This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.
+OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
+
+### Plans
+[https://www.notion.so/windborne/Corkscrew-Dev-List-381059e1759048dc8340b1ac02cdae94](https://www.notion.so/windborne/Corkscrew-Dev-List-381059e1759048dc8340b1ac02cdae94)
+

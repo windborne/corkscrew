@@ -1,4 +1,9 @@
 corkscrew.iml
+
 test/dumb_server/install.sh
 test/dumb_server/start_screen.sh
 test/dumb_server/dumb_server_remote.service
+
+packaging/vendor
+packaging/traveling-ruby-*
+packaging/corkscrew-*

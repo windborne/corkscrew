@@ -13,7 +13,7 @@ module Corkscrew
       @config_path = config_path || 'corkscrew.json'
       raise ConfigError, "Config file #{@config_path} does not exist" unless File.exist? @config_path
 
-      @options = options.transform_keys(&:to_sym)
+      @options = options.map {|key, value| [key.to_sym, value]}.to_h # would love to use transform_keys, but, well traveling ruby uses ruby 2.4
       @raw = ::RbJSON5.parse(File.read(@config_path))
       @defaults = ::RbJSON5.parse(File.read(File.join(corkscrew_data_dir, 'corkscrew-defaults.json')))
     end
