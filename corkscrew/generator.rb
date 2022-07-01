@@ -38,6 +38,12 @@ module Corkscrew
         end
       end
 
+      def generate_config(config_path=nil)
+        config_path ||= 'corkscrew.json'
+
+
+      end
+
       def options
         @config.options
       end

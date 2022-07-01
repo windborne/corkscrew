@@ -11,6 +11,7 @@ module Corkscrew
 
     def initialize(config_path = nil, options={})
       @config_path = config_path || 'corkscrew.json'
+      raise ConfigError, "Config file #{@config_path} does not exist" unless File.exist? @config_path
 
       @options = options.transform_keys(&:to_sym)
       @raw = ::RbJSON5.parse(File.read(@config_path))
@@ -63,6 +64,12 @@ module Corkscrew
 
     def require_ssh_config!
       raise ConfigError, 'SSH config is required to run remotely' if ssh.nil? || ssh['user'].nil? || ssh['host'].nil?
+    end
+
+    def has_install_script?
+      return false if install.nil?
+
+      File.exist? File.join(root_dir, install)
     end
 
     def method_missing(name, *_args, &_block)
