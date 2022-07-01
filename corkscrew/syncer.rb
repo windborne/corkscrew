@@ -19,8 +19,8 @@ module Corkscrew
       unless @config.local?
         raise SyncError, 'SSH config is required to sync code remotely' if @config.ssh.nil?
 
-        @command_runner.run_command "sudo mkdir -p #{destination}", print_output: false
-        @command_runner.run_command "sudo chown -R #{@config.ssh['user']} #{destination}", print_output: false
+        @command_runner.run_command "mkdir -p #{destination}", print_output: false
+        @command_runner.run_command "chown -R #{@config.ssh['user']} #{destination}", print_output: false
 
         destination = "#{@config.ssh['user']}@#{@config.ssh['host']}:#{destination}"
       end

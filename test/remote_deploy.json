@@ -6,5 +6,6 @@
   "ssh": {
     "host": "a.windbornesystems.com",
     "user": "windborne"
-  }
+  },
+  "service_manager": "screen"
 }

@@ -30,7 +30,7 @@ module Corkscrew
         end
       end
 
-      if result.strip.end_with? 'Permission denied'
+      if requires_sudo(result)
         puts 'Re-attempting with sudo' if print_output
         return run_command "sudo #{original_command}", cwd: cwd, print_output: print_output if sudo_escalation && !command.start_with?('sudo ')
       end
@@ -48,6 +48,13 @@ module Corkscrew
     end
 
     private
+
+    def requires_sudo(result)
+      return true if result.strip.end_with? 'Permission denied'
+      return true if result.strip.end_with? 'a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper'
+
+      false
+    end
 
     def sudo_password
       return @sudo_password unless @sudo_password.nil?

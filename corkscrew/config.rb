@@ -33,6 +33,10 @@ module Corkscrew
       convert_to_command(run)
     end
 
+    def build_command
+      convert_to_command(build)
+    end
+
     def run_command_absolute
       "cd #{deploy_path} && #{convert_to_command(run)}"
     end
@@ -60,6 +64,7 @@ module Corkscrew
     private
 
     def convert_to_command(command)
+      return nil if command.nil?
       return "bash #{command}" if command.split(' ').length == 1 && command.end_with?('.sh')
 
       command

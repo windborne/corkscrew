@@ -31,3 +31,30 @@ Configuration lives in `corkscrew.json`.
   "build": "build.sh", // the build script. May be a file or a bash command. Optional
 }
 ```
+
+## Commands
+All commands have a help option, eg ```corkscrew help generate```.
+You can also pass in a path to a corkscrew config file if there is not a 
+
+### Core
+These are the commands you will use most commonly.
+A common path is to run `corkscrew generate` once at the beginning of the project, then `corkscrew deploy` after that.
+
+- `generate` creates (or regenerates) an installation script
+- `install` runs the installation script. Accepts a `--local` flag
+- `deploy` syncs code, calls the build script (if there is one), and restarts the server. Accepts a `--local` flag
+
+### Utility
+- `help` prints available commands
+- `restart` restarts the server
+- `start` starts the server
+- `stop` stops the server
+- `sync` syncs the code, but does nothing else
+
+## Best practices
+- Make your install script idempotent so that you can update it then run `corkscrew install` again safely
+
+## Philosophies
+1. Minimum effort. Things should just work without you having to worry about how; there should be sane defaults for everything we can manage
+2. Delegation to existing tools. We don't need to re-invent systemd; instead, we should delegate as much work as possible to core unix utilities.  
+3. Compatibility with existing tools. You should be able to deploy completely manually and not have it break things, and also be able to go outside the system whenever you want

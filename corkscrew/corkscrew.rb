@@ -3,6 +3,7 @@ require_relative 'config'
 require_relative 'command_runner'
 require_relative 'syncer'
 require_relative 'generator'
+require_relative 'service_manager'
 
 module Corkscrew
 
@@ -13,15 +14,17 @@ module Corkscrew
     end
 
     desc 'deploy [corkscrew.json]', 'Deploys the app'
-    option :local, type: :boolean, desc: 'If provided, will assume the deployment path is on the current machine'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
     def deploy(config_path = nil)
       with_context(config_path) do
-        invoke :sync, config_path
+        sync config_path
+        command_runner.run_command @config.build_command, cwd: @config.deploy_path unless @config.build_command.nil?
+        service_manager.restart
       end
     end
 
     desc 'sync [corkscrew.json]', 'Syncs the app'
-    option :local, type: :boolean, desc: 'If provided, will assume the deployment path is on the current machine'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
     def sync(config_path = nil)
       with_context(config_path) do
         syncer.sync
@@ -36,12 +39,36 @@ module Corkscrew
     end
 
     desc 'install [corkscrew.json]', 'Runs installation script'
-    option :sync, type: :boolean, desc: 'If true, will sync the installation script first'
-    option :local, type: :boolean, desc: 'If provided, will assume the deployment path is on the current machine'
+    option :sync, type: :boolean, desc: 'If true, will sync code before installing', default: true
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
     def install(config_path = nil)
       with_context(config_path) do
         sync if options[:sync]
         command_runner.run_command @config.install_command, cwd: @config.deploy_path
+      end
+    end
+
+    desc 'restart [corkscrew.json]', 'Restarts the app'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def restart(config_path = nil)
+      with_context(config_path) do
+        service_manager.restart
+      end
+    end
+
+    desc 'start [corkscrew.json]', 'Starts the app'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def start(config_path = nil)
+      with_context(config_path) do
+        service_manager.start
+      end
+    end
+
+    desc 'stop [corkscrew.json]', 'Stops the app'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def stop(config_path = nil)
+      with_context(config_path) do
+        service_manager.stop
       end
     end
 
@@ -70,6 +97,10 @@ module Corkscrew
 
     def syncer
       @syncer ||= Corkscrew::Syncer.new @config, command_runner
+    end
+
+    def service_manager
+      @service_manager ||= Corkscrew::ServiceManager.new @config, command_runner
     end
 
   end

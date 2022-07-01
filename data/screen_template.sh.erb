@@ -1,5 +1,5 @@
 #!/bin/bash
 mkdir -p ~/screenlogs
 if ! screen -list | grep -q "<%= @config.name %>"; then
-  screen -L -Logfile ~/screenlogs/<%= @config.name %> -S <%= @config.name %> -dm bash -i -c "while true; do <%= @config.run %> ; sleep 10; done ; exec bash"
-; fi
+  screen -L -Logfile ~/screenlogs/<%= @config.name %> -S <%= @config.name %> -dm bash -i -c "while true; do <%= @config.run %> ; sleep 10; done ; exec bash";
+fi
