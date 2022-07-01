@@ -39,6 +39,7 @@ module Corkscrew
     end
 
     def connection
+      @config.require_ssh_config!
       @connection ||= Net::SSH.start(@config.ssh['host'], @config.ssh['user'])
     end
 

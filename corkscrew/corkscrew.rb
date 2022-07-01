@@ -35,6 +35,12 @@ module Corkscrew
     def generate(config_path = nil)
       with_context(config_path) do
         generator.generate
+
+        if ask_default_yes("Now that files have been generated, do you want to run them? You can also run `corkscrew install` yourself. [Yn]")
+          @config.local = ask_default_no("Are you on the same machine you deploy to? [yN]")
+          sync
+          command_runner.run_command @config.install_command, cwd: @config.deploy_path
+        end
       end
     end
 
@@ -73,6 +79,37 @@ module Corkscrew
     end
 
     private
+
+    def ask_default_yes(prompt)
+      ask_boolean(prompt, default: true)
+    end
+
+    def ask_default_no(prompt)
+      ask_boolean(prompt, default: false)
+    end
+
+    def ask_boolean(prompt, default: )
+      loop do
+        answer = ask(
+          prompt,
+          add_to_history: false
+        )
+
+        case answer
+        when nil
+          say ''
+          return default
+        when ''
+          return default
+        when /\A(yes|y)\z/i
+          return true
+        when /\A(no|n)\z/i
+          return false
+        else
+          next
+        end
+      end
+    end
 
     def with_context(config_path = nil)
       @context_depth ||= 0

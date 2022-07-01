@@ -3,21 +3,17 @@ require_relative './command_runner'
 module Corkscrew
   class Syncer
 
-    class SyncError < StandardError
-
-    end
-
     def initialize(config, command_runner)
       @config = config
       @command_runner = command_runner
     end
 
     def sync
-      raise SyncError, 'A deploy path is required to sync code' if @config.deploy_path.nil?
+      @config.require_deploy_path!
 
       destination = @config.deploy_path
       unless @config.local?
-        raise SyncError, 'SSH config is required to sync code remotely' if @config.ssh.nil?
+        @config.require_ssh_config!
 
         @command_runner.run_command "mkdir -p #{destination}", print_output: false
         @command_runner.run_command "chown -R #{@config.ssh['user']} #{destination}", print_output: false

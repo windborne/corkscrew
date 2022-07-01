@@ -5,6 +5,10 @@ module Corkscrew
 
     attr_reader :options
 
+    class ConfigError < StandardError
+
+    end
+
     def initialize(config_path = nil, options={})
       @config_path = config_path || 'corkscrew.json'
 
@@ -47,6 +51,18 @@ module Corkscrew
 
     def local?
       @options[:local]
+    end
+
+    def local=(value)
+      @options[:local] = value
+    end
+
+    def require_deploy_path!
+      raise ConfigError, 'A deploy path is required to sync code' if deploy_path.nil?
+    end
+
+    def require_ssh_config!
+      raise ConfigError, 'SSH config is required to run remotely' if ssh.nil? || ssh['user'].nil? || ssh['host'].nil?
     end
 
     def method_missing(name, *_args, &_block)
