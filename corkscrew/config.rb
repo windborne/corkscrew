@@ -59,7 +59,7 @@ module Corkscrew
     end
 
     def require_deploy_path!
-      raise ConfigError, 'A deploy path is required to sync code' if deploy_path.nil?
+      raise ConfigError, 'A deploy path is required to sync code' if deploy_path.nil? || deploy_path.empty?
     end
 
     def require_ssh_config!

@@ -13,7 +13,7 @@ At its core, corkscrew to the user can be broken into four parts:
 At all points in the process, corkscrew tries to make the process as simple as possible so that you can create a new service with a simple `corkscrew generate` and then deploy it to a new machine with `corkscrew deploy`.
 
 ## Configuration
-Configuration lives in `corkscrew.json`.
+Configuration lives in `corkscrew.json` by default.
 
 ```json5
 {
@@ -31,6 +31,8 @@ Configuration lives in `corkscrew.json`.
   "build": "build.sh", // the build script. May be a file or a bash command. Optional
 }
 ```
+
+You can generate this file interactively by calling `corkscrew generate [name, defaults to corkscrew.json]`
 
 ## Commands
 All commands have a help option, eg ```corkscrew help generate```.

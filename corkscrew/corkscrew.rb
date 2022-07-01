@@ -4,10 +4,13 @@ require_relative 'command_runner'
 require_relative 'syncer'
 require_relative 'generator'
 require_relative 'service_manager'
+require_relative 'helpers/query_helpers'
 
 module Corkscrew
 
   class App < Thor
+
+    include Corkscrew::Helpers::QueryHelpers
 
     def self.exit_on_failure?
       true
@@ -81,37 +84,6 @@ module Corkscrew
     end
 
     private
-
-    def ask_default_yes(prompt)
-      ask_boolean(prompt, default: true)
-    end
-
-    def ask_default_no(prompt)
-      ask_boolean(prompt, default: false)
-    end
-
-    def ask_boolean(prompt, default: )
-      loop do
-        answer = ask(
-          prompt,
-          add_to_history: false
-        )
-
-        case answer
-        when nil
-          say ''
-          return default
-        when ''
-          return default
-        when /\A(yes|y)\z/i
-          return true
-        when /\A(no|n)\z/i
-          return false
-        else
-          next
-        end
-      end
-    end
 
     def with_context(config_path = nil)
       @context_depth ||= 0
