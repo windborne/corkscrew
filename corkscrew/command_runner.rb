@@ -10,7 +10,7 @@ module Corkscrew
       @sudo_password = nil
     end
 
-    def run_command(command, sudo_escalation: true, cwd: nil, print_output: true)
+    def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true)
       original_command = command
 
       if command.start_with?('sudo ') && !command.start_with?('sudo -S ')
@@ -31,7 +31,8 @@ module Corkscrew
       end
 
       if requires_sudo(result)
-        puts 'Re-attempting with sudo' if print_output
+        puts result if print_sudo_escalation && !print_output
+        puts 'Re-attempting with sudo' if print_output || print_sudo_escalation
         return run_command "sudo #{original_command}", cwd: cwd, print_output: print_output if sudo_escalation && !command.start_with?('sudo ')
       end
 
@@ -52,6 +53,7 @@ module Corkscrew
 
     def requires_sudo(result)
       return true if result.strip.end_with? 'Permission denied'
+      return true if result.strip.end_with? 'Operation not permitted'
       return true if result.strip.end_with? 'a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper'
 
       false

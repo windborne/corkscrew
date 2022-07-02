@@ -30,7 +30,7 @@ corkscrew deploy
 
 For example:
 ```shell
-tar -xzf corkscrew-0.9.1-osx.tar.gz -C /usr/local/lib/
+tar -xzf corkscrew-0.9.2-osx.tar.gz -C /usr/local/lib/
 ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
 ```
 
