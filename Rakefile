@@ -2,20 +2,15 @@
 require 'bundler/setup'
 
 PACKAGE_NAME = "corkscrew"
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 TRAVELING_RUBY_VERSION = "20210206-2.4.10"
 
 # right now you can only package on the same architecture you'll deploy to
-# desc "Package your app"
-# task :package => ['package:linux:x86', 'package:linux:x86_64', 'package:osx']
+desc "Package your app"
+task :package => ['package:linux:x86_64', 'package:osx']
 
 namespace :package do
   namespace :linux do
-    desc "Package your app for Linux x86"
-    task :x86 => [:bundle_install] do
-      create_package("linux-x86")
-    end
-
     desc "Package your app for Linux x86_64"
     task :x86_64 => [:bundle_install] do
       create_package("linux-x86_64")
@@ -48,7 +43,7 @@ namespace :package do
 end
 
 def create_package(target)
-  package_dir = "packaging/#{PACKAGE_NAME}-#{VERSION}-#{target}"
+  package_dir = "packaging/#{PACKAGE_NAME}"
 
   sh "rm -rf #{package_dir}"
   sh "mkdir #{package_dir}"
@@ -69,7 +64,7 @@ def create_package(target)
   end
 
   unless ENV['DIR_ONLY']
-    sh "tar -czf #{package_dir}.tar.gz -C #{package_dir} ."
-    # sh "rm -rf #{package_dir}"
+    sh "tar -czf packaging/#{PACKAGE_NAME}-#{VERSION}-#{target}.tar.gz -C packaging #{PACKAGE_NAME}"
+    sh "rm -rf #{package_dir}"
   end
 end

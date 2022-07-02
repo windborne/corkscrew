@@ -68,7 +68,7 @@ This enables us to distribute an executable without any dependencies: users don'
 Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
 To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20210107](traveling-ruby/shared/gemfiles/20210107)) modified.
 
-To build, run either `rake package:osx` or `rake package:linux:x86_64`.
+To build, run either `rake package:osx` or `rake package:linux:x86_64`, or both with `rake package`.
 This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.
 OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
 

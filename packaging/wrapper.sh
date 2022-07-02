@@ -2,8 +2,21 @@
 set -e
 
 # Figure out where this script is located.
-SELFDIR="`dirname \"$0\"`"
-SELFDIR="`cd \"$SELFDIR\" && pwd`"
+realpath() {
+  OURPWD=$PWD
+  cd "$(dirname "$1")"
+  LINK=$(readlink "$(basename "$1")")
+  while [ "$LINK" ]; do
+    cd "$(dirname "$LINK")"
+    LINK=$(readlink "$(basename "$1")")
+  done
+  REALPATH="$PWD/$(basename "$1")"
+  cd "$OURPWD"
+  echo "$REALPATH"
+}
+
+SELFDIR=$( dirname $(realpath "$0") )
+SELFDIR="`cd -P \"$SELFDIR\" && pwd`"
 
 # Tell Bundler where the Gemfile and gems are.
 export BUNDLE_GEMFILE="$SELFDIR/lib/vendor/Gemfile"
