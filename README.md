@@ -12,6 +12,28 @@ At its core, corkscrew to the user can be broken into four parts:
 
 At all points in the process, corkscrew tries to make the process as simple as possible so that you can create a new service with a simple `corkscrew generate` and then deploy it to a new machine with `corkscrew deploy`.
 
+## Basic usage
+At the beginning of the project:
+```shell
+corkscrew generate
+```
+
+Then to deploy:
+```shell
+corkscrew deploy
+```
+
+## Installation
+1. Download the file from the [releases page](https://github.com/windborne/corkscrew/releases)
+2. Untar it
+3. Add it to your path or link it to somewhere in your path already 
+
+For example:
+```shell
+tar -xzf corkscrew-0.9.1-osx.tar.gz -C /usr/local/lib/
+ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
+```
+
 ## Configuration
 Configuration lives in `corkscrew.json` by default.
 
