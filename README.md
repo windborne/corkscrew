@@ -78,8 +78,25 @@ A common path is to run `corkscrew generate` once at the beginning of the projec
 - `sync` syncs the code, but does nothing else
 - `build` runs the build script, syncing before by default
 
-## Best practices
-- Make your install script idempotent so that you can update it then run `corkscrew install` again safely
+## Recommendations
+Make your install script idempotent so that you can update it then run `corkscrew install` again safely.
+
+For your install script, you'll sometimes need to run commands with sudo, but want to run others as the same user that will be running the code.
+A useful pattern for this is to run your normal commands in an if statement, and then your sudo commands after.
+This works because corkscrew doesn't escalate to sudo until it has to (but once it does, it has to run the whole thing as sudo).
+For example:
+```shell
+if [ "$(whoami)" == "DEPLOY_USER" ]; then
+  # code to run normally, eg pip installs
+  # the crontab editing belongs in here too
+fi
+
+# and then **after** 
+# sudo whatever
+
+echo "Installation complete!"
+```
+
 
 ## Development
 ### Philosophies
