@@ -8,7 +8,10 @@ Restart=always
 RestartSec=1
 RuntimeMaxSec=86400
 User=<%= @config.run_user %>
-WorkingDirectory=<%= @config.deploy_path %>
+WorkingDirectory=<%= @config.run_path %>
+<% if @config.environment_path %>
+EnvironmentFile=<%= @config.environment_path %>
+<% end %>
 ExecStart=<%= @config.run %>
 
 [Install]

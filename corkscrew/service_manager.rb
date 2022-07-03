@@ -23,7 +23,7 @@ module Corkscrew
       if @config.service_manager == 'systemd'
         @command_runner.run_command("sudo systemctl start #{@config.name}")
       elsif @config.service_manager == 'screen'
-        @command_runner.run_command("bash start_screen.sh", cwd: @config.deploy_path)
+        @command_runner.run_command("bash start_screen.sh", cwd: @config.run_path)
       else
         raise 'Invalid service manager'
       end
@@ -33,7 +33,7 @@ module Corkscrew
       if @config.service_manager == 'systemd'
         @command_runner.run_command("sudo systemctl stop #{@config.name}")
       elsif @config.service_manager == 'screen'
-        @command_runner.run_command("screen -S #{@config.name} -p 0 -X stuff $'\\cc'")
+        @command_runner.run_command("touch /tmp/#{@config.name}-screen-killed; screen -S #{@config.name} -p 0 -X stuff $'\\cc'; screen -S #{@config.name} -p 0 -X stuff 'exit\n'")
       else
         raise 'Invalid service manager'
       end

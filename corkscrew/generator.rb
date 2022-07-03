@@ -15,7 +15,7 @@ module Corkscrew
 
       def generate
         Corkscrew::Generator.source_root(@config.corkscrew_data_dir)
-        self.destination_root = @config.root_dir
+        self.destination_root = @config.run_root_dir
 
         if @config.service_manager == 'systemd'
           template(

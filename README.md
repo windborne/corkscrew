@@ -30,7 +30,7 @@ corkscrew deploy
 
 For example:
 ```shell
-tar -xzf corkscrew-0.9.2-osx.tar.gz -C /usr/local/lib/
+tar -xzf corkscrew-0.9.3-osx.tar.gz -C /usr/local/lib/
 ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
 ```
 
@@ -43,6 +43,7 @@ Configuration lives in `corkscrew.json` by default.
   "run": "start_server.sh", // the run script. May be a file or a bash command. REQUIRED
   "service_manager": "systemd", // may be systemd or screen. Optional, defaults to systemd
   "root": ".", // the root of the code you want to deploy. Optional, defaults to current repo
+  "run_root": "", // the place where you want to run your code from, relative to root. Optional (since usually you run from root)
   "sync": "rsync", // how to sync code. May be rsync or git. Optional, defaults to rsync. You can also always edit code locally
   "ssh": { // the ssh parameters. Optional, but if not provided you will only be able to deploy locally
     "host": "a.windbornesystems.com",
@@ -51,6 +52,7 @@ Configuration lives in `corkscrew.json` by default.
   "deploy_path": "/srv/", // where to sync the code to on the remote host. If not provided, you won't be able to deploy
   "install": "install.sh", // the install script. May be a file or a bash command. Optional
   "build": "build.sh", // the build script. May be a file or a bash command. Optional
+  "environment"
 }
 ```
 
@@ -74,6 +76,7 @@ A common path is to run `corkscrew generate` once at the beginning of the projec
 - `start` starts the server
 - `stop` stops the server
 - `sync` syncs the code, but does nothing else
+- `build` runs the build script, syncing before by default
 
 ## Best practices
 - Make your install script idempotent so that you can update it then run `corkscrew install` again safely

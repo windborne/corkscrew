@@ -2,7 +2,7 @@
 require 'bundler/setup'
 
 PACKAGE_NAME = "corkscrew"
-VERSION = "0.9.2"
+VERSION = "0.9.3"
 TRAVELING_RUBY_VERSION = "20210206-2.4.10"
 
 # right now you can only package on the same architecture you'll deploy to

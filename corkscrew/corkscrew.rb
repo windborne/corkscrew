@@ -22,7 +22,7 @@ module Corkscrew
       with_context(config_path) do
         generate(config_path) if !@config.has_install_script? && ask_default_yes("You're missing an install script (at least on this machine). Do you want to generate one? [Yn]")
         sync config_path
-        command_runner.run_command @config.build_command, cwd: @config.deploy_path unless @config.build_command.nil?
+        command_runner.run_command @config.build_command, cwd: @config.run_path unless @config.build_command.nil?
         service_manager.restart
       end
     end
@@ -43,19 +43,29 @@ module Corkscrew
         if ask_default_yes("Now that files have been generated, do you want to run them? You can also run `corkscrew install` yourself. [Yn]")
           @config.local = ask_default_no("Are you on the same machine you deploy to? [yN]") if options[:local].nil?
           sync(config_path)
-          command_runner.run_command @config.install_command, cwd: @config.deploy_path
+          command_runner.run_command @config.install_command, cwd: @config.run_path
         end
       end
     end
 
-    desc 'install [corkscrew.json]', 'Runs installation script'
+    desc 'install [corkscrew.json]', 'Runs the installation script'
     option :sync, type: :boolean, desc: 'If true, will sync code before installing', default: true
     option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
     def install(config_path = nil)
       with_context(config_path) do
         generator.generate if !@config.has_install_script? && ask_default_yes("You're missing an install script (at least on this machine). Do you want to generate one? [Yn]")
         sync if options[:sync]
-        command_runner.run_command @config.install_command, cwd: @config.deploy_path
+        command_runner.run_command @config.install_command, cwd: @config.run_path
+      end
+    end
+
+    desc 'build [corkscrew.json]', 'Runs the build script'
+    option :sync, type: :boolean, desc: 'If true, will sync code before installing', default: true
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def build(config_path = nil)
+      with_context(config_path) do
+        sync if options[:sync]
+        command_runner.run_command @config.build_command, cwd: @config.run_path
       end
     end
 
