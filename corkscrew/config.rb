@@ -62,6 +62,14 @@ module Corkscrew
       File.join(deploy_path, run_root)
     end
 
+    def run_user
+      return fetch('run_user') unless fetch('run_user').nil?
+
+      return nil if ssh.nil?
+
+      ssh['user']
+    end
+
     def environment_path
       return nil if environment_file.nil? || environment_file.empty?
 
@@ -90,12 +98,16 @@ module Corkscrew
       File.exist? File.join(run_root_dir, install)
     end
 
-    def method_missing(name, *_args, &_block)
+    def fetch(name)
       name = name.to_s
 
       return @defaults[name] if !@raw.key?(name) && @defaults.key?(name)
 
       @raw[name]
+    end
+
+    def method_missing(name, *_args, &_block)
+      fetch(name)
     end
 
     def respond_to_missing(method_name, _include_private=false)
