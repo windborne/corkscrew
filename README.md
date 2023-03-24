@@ -52,7 +52,7 @@ Configuration lives in `corkscrew.json` by default.
   "deploy_path": "/srv/", // where to sync the code to on the remote host. If not provided, you won't be able to deploy
   "install": "install.sh", // the install script. May be a file or a bash command. Optional
   "build": "build.sh", // the build script. May be a file or a bash command. Optional
-  "environment"
+  "environment": ".env" // An environment file for systemd. Optional
 }
 ```
 
@@ -113,7 +113,3 @@ To this end, traveling-ruby is cloned within this repository and the Gemfile (wi
 To build, run either `rake package:osx` or `rake package:linux:x86_64`, or both with `rake package`.
 This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.
 OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
-
-### Plans
-[https://www.notion.so/windborne/Corkscrew-Dev-List-381059e1759048dc8340b1ac02cdae94](https://www.notion.so/windborne/Corkscrew-Dev-List-381059e1759048dc8340b1ac02cdae94)
-
