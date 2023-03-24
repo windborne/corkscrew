@@ -42,6 +42,18 @@ module Corkscrew
         end
       end
 
+      def generate_nginx
+        @config.require_nginx!
+
+        Corkscrew::Generator.source_root(@config.corkscrew_data_dir)
+        self.destination_root = @config.run_root_dir
+
+        template(
+          'nginx.conf.erb',
+          @config.nginx['config']
+        )
+      end
+
       def generate_config(config_path=nil)
         config_path ||= 'corkscrew.json'
 

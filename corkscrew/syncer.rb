@@ -41,5 +41,17 @@ module Corkscrew
       CommandRunner.run_locally 'rsync', *flags, source, destination
     end
 
+    def copy_file(source, destination)
+      unless @config.local?
+        @config.require_ssh_config!
+
+        @command_runner.run_command "touch #{destination}", print_output: false
+        @command_runner.run_command "sudo chown #{@config.ssh['user']} #{destination}", print_output: false
+        destination = "#{@config.ssh['user']}@#{@config.ssh['host']}:#{destination}"
+      end
+
+      CommandRunner.run_locally 'scp', source, destination
+    end
+
   end
 end

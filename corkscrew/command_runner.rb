@@ -34,7 +34,7 @@ module Corkscrew
 
             channel.on_data do |_ch2, data|
               @sudo_password = nil if data.include?('Sorry, try again.')
-              channel.send_data("#{sudo_password}\n") if data.include? '[sudo] password for'
+              channel.send_data("#{sudo_password}\n") if password_requested(data)
               result += data
               print data if print_output
             end
@@ -69,6 +69,12 @@ module Corkscrew
 
     private
 
+    def password_requested(data)
+      # return true if data =~ /^|\nPassword:\s*\z/
+
+      data.include? '[sudo] password for'
+    end
+
     def requires_sudo(result)
       return true if result.strip.end_with? 'Permission denied'
       return true if result.strip.end_with? 'Operation not permitted'
@@ -78,6 +84,8 @@ module Corkscrew
     end
 
     def sudo_password
+      return '' if @config.ssh['no_pwd']
+
       return @sudo_password unless @sudo_password.nil?
 
       if @config.local?

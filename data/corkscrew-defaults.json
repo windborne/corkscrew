@@ -2,5 +2,8 @@
   "service_manager": "systemd",
   "sync": "rsync",
   "root": ".",
-  "install": "install.sh"
+  "install": "install.sh",
+  "nginx": {
+    "config": "nginx.conf"
+  }
 }

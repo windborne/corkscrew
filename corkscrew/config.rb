@@ -88,6 +88,13 @@ module Corkscrew
       raise ConfigError, 'A deploy path is required to sync code' if deploy_path.nil? || deploy_path.empty?
     end
 
+    def require_nginx!
+      raise ConfigError, 'No nginx config specified' if nginx.nil? || nginx.empty?
+      %w[port host].each do |key|
+        raise ConfigError, "A #{key} is required to set up nginx" if nginx[key].nil? || nginx[key].to_s.empty?
+      end
+    end
+
     def require_ssh_config!
       raise ConfigError, 'SSH config is required to run remotely' if ssh.nil? || ssh['user'].nil? || ssh['host'].nil?
     end
@@ -96,6 +103,29 @@ module Corkscrew
       return false if install.nil?
 
       File.exist? File.join(run_root_dir, install)
+    end
+
+    def nginx
+      return @nginx unless @nginx.nil?
+
+      @nginx = fetch('nginx')
+      return @nginx if @nginx.nil?
+
+      @defaults['nginx'].each do |key, value|
+        @nginx[key] = value if @nginx[key].nil?
+      end
+
+      @nginx
+    end
+
+    def nginx_config_path
+      File.join(run_root_dir, nginx['config'])
+    end
+
+    def has_nginx_config?
+      return false if install.nil?
+
+      File.exist? nginx_config_path
     end
 
     def ssh_identity
