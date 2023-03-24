@@ -101,7 +101,7 @@ module Corkscrew
 
       begin
         @context_depth += 1
-        Corkscrew::Generator.new(nil).generate_config(config_path) if !File.exist?(config_path || 'corkscrew.json') && ask_default_yes("No corkscrew config found. Would you like to generate one? [Yn]")
+        Corkscrew::Generator.new(nil).generate_config(config_path) if @config.nil? && !File.exist?(config_path || 'corkscrew.json') && ask_default_yes("No corkscrew config found. Would you like to generate one? [Yn]")
         @config ||= Corkscrew::Config.new config_path, options
         yield
         @context_depth -= 1

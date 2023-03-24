@@ -22,12 +22,30 @@ module Corkscrew
         result = self.class.run_locally command, print_output: print_output, cwd: cwd
       else
         command = "cd #{cwd} && #{command}" unless cwd.nil?
-
         result = ''
-        connection.exec!(command) do |_channel, _stream, data|
-          result += data
-          print data if print_output
+
+        channel = connection.open_channel do |channel|
+          channel.request_pty do |_ch, success|
+            raise "Could not initialize PTY" unless success
+          end
+
+          channel.exec(command) do |_ch, success|
+            raise "Could not execute command: #{command.inspect}" unless success
+
+            channel.on_data do |_ch2, data|
+              @sudo_password = nil if data.include?('Sorry, try again.')
+              channel.send_data("#{sudo_password}\n") if data.include? '[sudo] password for'
+              result += data
+              print data if print_output
+            end
+
+            channel.on_extended_data do |_ch2, _type, data|
+              $stderr.print(data)
+            end
+          end
         end
+
+        channel.wait
       end
 
       if requires_sudo(result)
