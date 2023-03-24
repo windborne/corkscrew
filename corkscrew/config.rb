@@ -98,6 +98,20 @@ module Corkscrew
       File.exist? File.join(run_root_dir, install)
     end
 
+    def ssh_identity
+      identity = fetch('ssh')&.dig('identity')
+      return nil if identity.nil? || identity.strip == ''
+
+      identity.gsub(/\A~/) { `echo ~`.strip }
+    end
+
+    def ssh_options
+      ssh = fetch('ssh')
+      {
+        keys: ssh['identity'].nil? ? nil : [*ssh['identity']]
+      }.compact
+    end
+
     def fetch(name)
       name = name.to_s
 

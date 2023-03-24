@@ -33,7 +33,10 @@ module Corkscrew
         '--delete'
       ]
 
+      # Note: a known issue is that we don't use the ssh identity file, and instead rely on the user to `ssh-add` it
+
       puts "Syncing #{source} to #{destination}"
+      # puts "rsync #{flags.join(' ')} #{source} #{destination}"
 
       CommandRunner.run_locally 'rsync', *flags, source, destination
     end
