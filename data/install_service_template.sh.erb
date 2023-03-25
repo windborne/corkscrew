@@ -2,8 +2,8 @@
 
 set -e
 
-cp <%= "#{@config.name}.service" %> /etc/systemd/system
-systemctl enable <%= @config.name %>
-systemctl start <%= @config.name %>
+sudo cp <%= "#{@config.name}.service" %> /etc/systemd/system
+sudo systemctl enable <%= @config.name %>
+sudo systemctl start <%= @config.name %>
 
 echo "Installation complete!"

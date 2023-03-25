@@ -30,7 +30,7 @@ corkscrew deploy
 
 For example:
 ```shell
-tar -xzf corkscrew-0.9.4-osx.tar.gz -C /usr/local/lib/
+tar -xzf corkscrew-0.9.5-osx.tar.gz -C /usr/local/lib/
 ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
 ```
 
@@ -47,12 +47,19 @@ Configuration lives in `corkscrew.json` by default.
   "sync": "rsync", // how to sync code. May be rsync or git. Optional, defaults to rsync. You can also always edit code locally
   "ssh": { // the ssh parameters. Optional, but if not provided you will only be able to deploy locally
     "host": "a.windbornesystems.com",
-    "user": "windborne"
+    "user": "windborne",
+    "identity": "/path/to/identity/file", // an SSH identity file for connecting 
+    "no_pwd": false // if true
   },
   "deploy_path": "/srv/", // where to sync the code to on the remote host. If not provided, you won't be able to deploy
   "install": "install.sh", // the install script. May be a file or a bash command. Optional
   "build": "build.sh", // the build script. May be a file or a bash command. Optional
-  "environment": ".env" // An environment file for systemd. Optional
+  "environment_file": ".env", // An environment file for systemd. Optional
+  "nginx": { // optional config to set up nginx
+    "port": 0000, // port the server runs on
+    "host": "", // the hostname it should respond to requests from
+    "cors": true // if true, will generate setup to allow CORS requests. Optional, defaults to false
+  }
 }
 ```
 
@@ -77,26 +84,13 @@ A common path is to run `corkscrew generate` once at the beginning of the projec
 - `stop` stops the server
 - `sync` syncs the code, but does nothing else
 - `build` runs the build script, syncing before by default
+- `nginx` sets up nginx for the app, generating the config before if needed
+- `nginx_generate` generates an nginx configuration
 
 ## Recommendations
 Make your install script idempotent so that you can update it then run `corkscrew install` again safely.
 
-For your install script, you'll sometimes need to run commands with sudo, but want to run others as the same user that will be running the code.
-A useful pattern for this is to run your normal commands in an if statement, and then your sudo commands after.
-This works because corkscrew doesn't escalate to sudo until it has to (but once it does, it has to run the whole thing as sudo).
-For example:
-```shell
-if [ "$(whoami)" == "DEPLOY_USER" ]; then
-  # code to run normally, eg pip installs
-  # the crontab editing belongs in here too
-fi
-
-# and then **after** 
-# sudo whatever
-
-echo "Installation complete!"
-```
-
+We also recommend having as little in your build script as possible, since it gets run every deploy; consider moving some of its contents to the install script if needed.
 
 ## Development
 ### Philosophies
