@@ -49,7 +49,7 @@ Configuration lives in `corkscrew.json` by default.
     "host": "a.windbornesystems.com",
     "user": "windborne",
     "identity": "/path/to/identity/file", // an SSH identity file for connecting 
-    "no_pwd": false // if true
+    "no_pwd": false // if true, will provide an empty string when asked for the password. Useful for some cloud environments.
   },
   "deploy_path": "/srv/", // where to sync the code to on the remote host. If not provided, you won't be able to deploy
   "install": "install.sh", // the install script. May be a file or a bash command. Optional
