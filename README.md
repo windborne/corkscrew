@@ -30,7 +30,7 @@ corkscrew deploy
 
 For example:
 ```shell
-tar -xzf corkscrew-0.9.5-osx.tar.gz -C /usr/local/lib/
+tar -xzf corkscrew-0.9.6-osx-x86_64.tar.gz -C /usr/local/lib/
 ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
 ```
 
@@ -102,7 +102,7 @@ We also recommend having as little in your build script as possible, since it ge
 Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/phusion/traveling-ruby).
 This enables us to distribute an executable without any dependencies: users don't need to worry about installing ruby or anything else.
 Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
-To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20210107](traveling-ruby/shared/gemfiles/20210107)) modified.
+To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20230803](traveling-ruby/shared/gemfiles/20210107)) modified.
 
 To build, run either `rake package:osx` or `rake package:linux:x86_64`, or both with `rake package`.
 This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.

@@ -2,8 +2,8 @@
 require 'bundler/setup'
 
 PACKAGE_NAME = "corkscrew"
-VERSION = "0.9.5"
-TRAVELING_RUBY_VERSION = "20210206-2.4.10"
+VERSION = "0.9.6"
+TRAVELING_RUBY_VERSION = "20230803-3.0.6"
 
 # right now you can only package on the same architecture you'll deploy to
 desc "Package your app"
@@ -19,13 +19,13 @@ namespace :package do
 
   desc "Package your app for OS X"
   task :osx => [:bundle_install] do
-    create_package("osx")
+    create_package("osx-x86_64")
   end
 
   desc "Install gems to local directory"
   task :bundle_install do
-    if RUBY_VERSION !~ /^2\.4\./
-      abort "You can only 'bundle install' using Ruby 2.4, because that's what Traveling Ruby uses."
+    if RUBY_VERSION !~ /^3\.0\./
+      abort "You can only 'bundle install' using Ruby 3.0, because that's what Traveling Ruby uses."
     end
     sh "rm -rf packaging/tmp"
     sh "mkdir packaging/tmp"
