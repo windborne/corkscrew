@@ -9,3 +9,5 @@ packaging/traveling-ruby-*
 packaging/corkscrew-*
 
 rubyc
+
+**/.DS_Store

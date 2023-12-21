@@ -5,6 +5,7 @@ require_relative 'syncer'
 require_relative 'generator'
 require_relative 'service_manager'
 require_relative 'nginx_manager'
+require_relative 'log_setup_manager'
 require_relative 'helpers/query_helpers'
 
 module Corkscrew
@@ -57,6 +58,14 @@ module Corkscrew
         generator.generate if !@config.has_install_script? && ask_default_yes("You're missing an install script (at least on this machine). Do you want to generate one? [Yn]")
         sync if options[:sync]
         command_runner.run_command @config.install_command, cwd: @config.run_path
+      end
+    end
+
+    desc 'setup_logs [corkscrew.json]', 'Sets up log forwarding to logtail for the app'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def setup_logs(config_path = nil)
+      with_context(config_path) do
+        log_setup_manager.configure_app
       end
     end
 
@@ -142,6 +151,10 @@ module Corkscrew
 
     def nginx_manager
       @nginx_manager ||= Corkscrew::NginxManager.new @config, command_runner, syncer
+    end
+
+    def log_setup_manager
+      @log_setup_manager ||= Corkscrew::LogSetupManager.new @config, command_runner, syncer
     end
 
     def service_manager

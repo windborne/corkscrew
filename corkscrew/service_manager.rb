@@ -10,7 +10,7 @@ module Corkscrew
 
     def restart
       if @config.service_manager == 'systemd'
-        @command_runner.run_command("sudo systemctl restart #{@config.name}")
+        @command_runner.run_command("sudo systemctl restart #{@config.service_name || @config.name}")
       elsif @config.service_manager == 'screen'
         stop
         start
@@ -21,7 +21,7 @@ module Corkscrew
 
     def start
       if @config.service_manager == 'systemd'
-        @command_runner.run_command("sudo systemctl start #{@config.name}")
+        @command_runner.run_command("sudo systemctl start #{@config.service_name || @config.name}")
       elsif @config.service_manager == 'screen'
         @command_runner.run_command("bash start_screen.sh", cwd: @config.run_path)
       else
@@ -31,7 +31,7 @@ module Corkscrew
 
     def stop
       if @config.service_manager == 'systemd'
-        @command_runner.run_command("sudo systemctl stop #{@config.name}")
+        @command_runner.run_command("sudo systemctl stop #{@config.service_name || @config.name}")
       elsif @config.service_manager == 'screen'
         @command_runner.run_command("touch /tmp/#{@config.name}-screen-killed; screen -S #{@config.name} -p 0 -X stuff $'\\cc'; screen -S #{@config.name} -p 0 -X stuff 'exit\n'")
       else
