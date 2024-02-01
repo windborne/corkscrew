@@ -101,6 +101,7 @@ module Corkscrew
 
     def has_install_script?
       return false if install.nil?
+      return true if install.split(' ').length > 1
 
       File.exist? File.join(run_root_dir, install)
     end
