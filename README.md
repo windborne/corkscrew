@@ -30,7 +30,7 @@ corkscrew deploy
 
 For example:
 ```shell
-tar -xzf corkscrew-0.9.8-osx-x86_64.tar.gz -C /usr/local/lib/
+tar -xzf corkscrew-LATEST-osx-x86_64.tar.gz -C /usr/local/lib/
 ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
 ```
 
@@ -75,6 +75,7 @@ However, we include a full list of options here for reference.
   "name": "your_service", // REQUIRED. Should be snake case
   "run": "start_server.sh", // the run script. May be a file or a bash command. REQUIRED
   "service_manager": "systemd", // may be systemd or screen. Optional, defaults to systemd
+  "restart_on_deploy": true, // defaults to true; if false, won't restart the server after deploying
   "root": ".", // the root of the code you want to deploy. Optional, defaults to current repo
   "run_root": "", // the place where you want to run your code from, relative to root. Optional (since usually you run from root)
   "sync": "rsync", // how to sync code. May be rsync or git. Optional, defaults to rsync. You can also always edit code locally

@@ -25,7 +25,7 @@ module Corkscrew
         generate(config_path) if !@config.has_install_script? && ask_default_yes("You're missing an install script (at least on this machine). Do you want to generate one? [Yn]")
         sync config_path
         command_runner.run_command @config.build_command, cwd: @config.run_path unless @config.build_command.nil?
-        service_manager.restart
+        service_manager.restart unless @config.restart_on_deploy == false
       end
     end
 

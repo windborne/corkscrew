@@ -66,5 +66,6 @@ def create_package(target)
   unless ENV['DIR_ONLY']
     sh "tar -czf packaging/#{PACKAGE_NAME}-#{VERSION}-#{target}.tar.gz -C packaging #{PACKAGE_NAME}"
     sh "rm -rf #{package_dir}"
+    sh "cp packaging/#{PACKAGE_NAME}-#{VERSION}-#{target}.tar.gz packaging/#{PACKAGE_NAME}-LATEST-#{target}.tar.gz"
   end
 end
