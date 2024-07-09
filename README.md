@@ -24,7 +24,7 @@ corkscrew deploy
 ```
 
 ## Installation
-1. Download the file from the [releases page](https://github.com/windborne/corkscrew/releases)
+1. Download the file from the [releases page](https://github.com/windborne/corkscrew/releases) or (on a remote machine) `wget https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz`
 2. Untar it
 3. Add it to your path or link it to somewhere in your path already 
 
@@ -96,6 +96,7 @@ However, we include a full list of options here for reference.
   },
   "logfile": "/path/to/logfile", // For log forwarding to cloud: where logs are stored. With a normal config, this is set automatically
   "service_name": "your_service", // The name of the service if it's been renamed from the default
+  "git_info": ".gitinfo.json", // where to store git info. Optional, defaults to .gitinfo.json. If false, won't store git info
 }
 ```
 

@@ -80,6 +80,10 @@ module Corkscrew
       @options[:local]
     end
 
+    def add_git_info?
+      @options[:git_info] != false
+    end
+
     def local=(value)
       @options[:local] = value
     end
