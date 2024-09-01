@@ -6,4 +6,8 @@ sudo cp <%= "#{@config.name}.service" %> /etc/systemd/system
 sudo systemctl enable <%= @config.name %>
 sudo systemctl start <%= @config.name %>
 
+<% if @config.zero_downtime_deployments? %>
+sudo cp <%= "#{@config.name}_blue.service" %> /etc/systemd/system
+<% end %>
+
 echo "Installation complete!"

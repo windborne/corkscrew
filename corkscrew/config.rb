@@ -81,7 +81,35 @@ module Corkscrew
     end
 
     def add_git_info?
-      @options[:git_info] != false
+      fetch('git_info') != false
+    end
+
+    def regularly_restart?
+      fetch('regularly_restart') != false
+    end
+
+    def no_nginx?
+      nginx.nil? || nginx.empty?
+    end
+
+    def has_nginx?
+      !no_nginx?
+    end
+
+    def green_port
+      return nil if no_nginx?
+
+      nginx['port']
+    end
+
+    def blue_port
+      return nil if no_nginx?
+
+      nginx['blue_port']
+    end
+
+    def zero_downtime_deployments?
+      !blue_port.nil?
     end
 
     def local=(value)
@@ -93,7 +121,7 @@ module Corkscrew
     end
 
     def require_nginx!
-      raise ConfigError, 'No nginx config specified' if nginx.nil? || nginx.empty?
+      raise ConfigError, 'No nginx config specified' if no_nginx?
       %w[port host].each do |key|
         raise ConfigError, "A #{key} is required to set up nginx" if nginx[key].nil? || nginx[key].to_s.empty?
       end

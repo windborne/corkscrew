@@ -75,7 +75,8 @@ module Corkscrew
         sha: CommandRunner.run_locally('git rev-parse HEAD', cwd: @config.root_dir, print_output: false).strip,
         branch: CommandRunner.run_locally('git rev-parse --abbrev-ref HEAD', cwd: @config.root_dir, print_output: false).strip,
         dirty: modified_files.any?,
-        modified_files: modified_files
+        modified_files: modified_files,
+        synced_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S%z")
       }
     end
 

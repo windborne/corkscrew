@@ -1,16 +1,21 @@
 [Unit]
-Description="<%= @config.name %>"
+Description="<%= @config.name %><% if @is_blue %>_blue<% end %>"
 After=network.target
 
 [Service]
 Type=simple
 Restart=always
 RestartSec=1
+<% if @config.regularly_restart? %>
 RuntimeMaxSec=86400
+<% end %>
 User=<%= @config.run_user %>
 WorkingDirectory=<%= @config.run_path %>
 <% if @config.environment_path %>
 EnvironmentFile=<%= @config.environment_path %>
+<% end %>
+<% if @is_blue %>
+Environment=PORT=<%= @config.blue_port %>
 <% end %>
 ExecStart=<%= @config.run %>
 

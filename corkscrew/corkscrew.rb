@@ -6,6 +6,7 @@ require_relative 'generator'
 require_relative 'service_manager'
 require_relative 'nginx_manager'
 require_relative 'log_setup_manager'
+require_relative 'version'
 require_relative 'helpers/query_helpers'
 
 module Corkscrew
@@ -17,6 +18,14 @@ module Corkscrew
     def self.exit_on_failure?
       true
     end
+
+    desc 'version', 'Prints the version'
+    def version
+      puts "Corkscrew version #{Corkscrew::VERSION}"
+    end
+
+    map "--version" => :version
+    map "--help" => :help
 
     desc 'deploy [corkscrew.json]', 'Deploys the app'
     option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
@@ -42,7 +51,12 @@ module Corkscrew
       with_context(config_path) do
         generator.generate
 
-        if ask_default_yes("Now that files have been generated, do you want to run them? You can also run `corkscrew install` yourself. [Yn]")
+        if @config.has_nginx? && ask_default_yes("Do you want to set up nginx now? You can also run `corkscrew nginx yourself`. [Yn]")
+          generator.generate_nginx if !@config.has_nginx_config? && ask_default_yes("You're missing an nginx config (at least on this machine). Do you want to generate one? [Yn]")
+          nginx_manager.configure_app
+        end
+
+        if ask_default_yes("Now that files have been generated, do you want to run the install script? You can also run `corkscrew install` yourself after editing it. [Yn]")
           @config.local = ask_default_no("Are you on the same machine you deploy to? [yN]") if options[:local].nil?
           sync(config_path)
           command_runner.run_command @config.install_command, cwd: @config.run_path
@@ -158,7 +172,7 @@ module Corkscrew
     end
 
     def service_manager
-      @service_manager ||= Corkscrew::ServiceManager.new @config, command_runner
+      @service_manager ||= Corkscrew::ServiceManager.new @config, command_runner, nginx_manager
     end
 
   end
