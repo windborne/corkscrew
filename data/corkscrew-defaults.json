@@ -6,5 +6,6 @@
   "nginx": {
     "config": "nginx.conf"
   },
-  "regularly_restart": false
+  "regularly_restart": false,
+  "confirm_sync": "dirty"
 }
