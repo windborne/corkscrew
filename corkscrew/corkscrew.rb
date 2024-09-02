@@ -6,6 +6,7 @@ require_relative 'generator'
 require_relative 'service_manager'
 require_relative 'nginx_manager'
 require_relative 'log_setup_manager'
+require_relative 'metrics_setup_manager'
 require_relative 'version'
 require_relative 'helpers/query_helpers'
 
@@ -100,6 +101,22 @@ module Corkscrew
       end
     end
 
+    desc 'metrics_node [corkscrew.json]', 'Sets up the server as a node that can export metrics to Prometheus'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def metrics_node(config_path = nil)
+      with_context(config_path) do
+        metrics_setup_manager.configure_node
+      end
+    end
+
+    desc 'metrics_host [corkscrew.json]', 'Sets up the server as a host with Prometheus and Grafana'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    def metrics_host(config_path = nil)
+      with_context(config_path) do
+        metrics_setup_manager.configure_host
+      end
+    end
+
     desc 'build [corkscrew.json]', 'Runs the build script'
     option :sync, type: :boolean, desc: 'If true, will sync code before installing', default: true
     option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
@@ -169,6 +186,10 @@ module Corkscrew
 
     def log_setup_manager
       @log_setup_manager ||= Corkscrew::LogSetupManager.new @config, command_runner, syncer
+    end
+
+    def metrics_setup_manager
+      @metrics_setup_manager ||= Corkscrew::MetricsSetupManager.new @config, command_runner, syncer, nginx_manager
     end
 
     def service_manager

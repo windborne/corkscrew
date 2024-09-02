@@ -1,0 +1,11 @@
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/etc/prometheus/prometheus --config.file=/etc/prometheus/prometheus.yml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
