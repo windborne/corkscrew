@@ -52,6 +52,13 @@ module Corkscrew
           '--delete'
         ]
 
+        unless @config.ssh['identity'].nil? || @config.ssh['identity'].empty?
+          flags += [
+            '-e',
+            "ssh -i #{@config.ssh['identity']}"
+          ]
+        end
+
         # Note: a known issue is that we don't use the ssh identity file, and instead rely on the user to `ssh-add` it
 
         puts "Syncing #{source} to #{destination}"
