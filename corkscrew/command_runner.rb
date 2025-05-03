@@ -35,8 +35,8 @@ module Corkscrew
             channel.on_data do |_ch2, data|
               @sudo_password = nil if data.include?('Sorry, try again.')
               channel.send_data("#{sudo_password}\n") if password_requested(data)
-              result += data
-              print data if print_output
+              result += data.gsub(@sudo_password.to_s, '')
+              print data.gsub(@sudo_password.to_s, '') if print_output
             end
 
             channel.on_extended_data do |_ch2, _type, data|
