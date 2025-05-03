@@ -32,8 +32,8 @@ A common path is to run `corkscrew generate` once at the beginning of the projec
 The commands you will use the most often are:
 - `generate` creates (or regenerates) an installation script
 - `install` runs the installation script. Accepts a `--local` flag
-- `sync` syncs code to the other machine. Accepts a `--local` flag
-- `deploy` syncs code, calls the build script (if there is one), and restarts the server. Accepts a `--local` flag
+- `sync` syncs code to the other machine. Accepts a `--local` flag and a `-y` flag to skip confirmation
+- `deploy` syncs code, calls the build script (if there is one), and restarts the server. Accepts a `--local` flag and a `-y` flag to skip confirmation
 
 All commands have a help option, eg ```corkscrew help generate``` or ```corkscrew help``` for general help.
 

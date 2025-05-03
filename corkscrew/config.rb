@@ -80,6 +80,10 @@ module Corkscrew
       @options[:local]
     end
 
+    def skip_confirmation?
+      @options[:no_confirm]
+    end
+
     def add_git_info?
       fetch('git_info') != false
     end

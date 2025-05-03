@@ -19,10 +19,12 @@ module Corkscrew
         @config.require_deploy_path!
 
         confirmed = true
-        if @config.confirm_sync == 'always'
-          confirmed = ask_default_yes("Are you sure you want to sync? [Yn]")
-        elsif @config.confirm_sync == 'dirty' && git_info[:dirty]
-          confirmed = ask_default_no("You have uncommitted changes. Are you sure you want to sync? [yN]")
+        unless @config.skip_confirmation?
+          if @config.confirm_sync == 'always'
+            confirmed = ask_default_yes("Are you sure you want to sync? [Yn]")
+          elsif @config.confirm_sync == 'dirty' && git_info[:dirty]
+            confirmed = ask_default_no("You have uncommitted changes. Are you sure you want to sync? [yN]")
+          end
         end
 
         unless confirmed

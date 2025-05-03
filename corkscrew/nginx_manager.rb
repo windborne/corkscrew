@@ -44,7 +44,7 @@ module Corkscrew
       replace = "proxy_pass http://localhost:#{new_port};"
       sed_command = "sudo sed -i 's|#{find}|#{replace}|g' #{remote_nginx_path}"
       sed_output = @command_runner.run_command(sed_command, print_output: false)
-      unless sed_output.empty?
+      unless sed_output.empty? || sed_output.start_with?('[sudo] password for')
         puts "Error replacing port"
         puts sed_output
         return false

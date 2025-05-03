@@ -30,6 +30,7 @@ module Corkscrew
 
     desc 'deploy [corkscrew.json]', 'Deploys the app'
     option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    option :no_confirm, type: :boolean, desc: 'If true, will force the sync even if there are uncommitted changes', aliases: '-y'
     def deploy(config_path = nil)
       with_context(config_path) do
         generate(config_path) if !@config.has_install_script? && ask_default_yes("You're missing an install script (at least on this machine). Do you want to generate one? [Yn]")
@@ -41,6 +42,7 @@ module Corkscrew
 
     desc 'sync [corkscrew.json]', 'Syncs the app'
     option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    option :no_confirm, type: :boolean, desc: 'If true, will force the sync even if there are uncommitted changes', aliases: '-y'
     def sync(config_path = nil)
       with_context(config_path) do
         syncer.sync
@@ -68,6 +70,7 @@ module Corkscrew
     desc 'install [corkscrew.json]', 'Runs the installation script'
     option :sync, type: :boolean, desc: 'If true, will sync code before installing', default: true
     option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    option :no_confirm, type: :boolean, desc: 'If true, will force the sync even if there are uncommitted changes', aliases: '-y'
     def install(config_path = nil)
       with_context(config_path) do
         generator.generate if !@config.has_install_script? && ask_default_yes("You're missing an install script (at least on this machine). Do you want to generate one? [Yn]")
