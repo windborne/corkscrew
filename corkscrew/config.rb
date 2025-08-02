@@ -175,7 +175,8 @@ module Corkscrew
     def ssh_options
       ssh = fetch('ssh')
       {
-        keys: ssh['identity'].nil? ? nil : [*ssh['identity']]
+        keys: ssh['identity'].nil? ? nil : [*ssh['identity']],
+        encryption: ssh['encryption'].nil? ? %w[aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com] : ssh['encryption']
       }.compact
     end
 
