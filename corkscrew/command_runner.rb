@@ -10,7 +10,7 @@ module Corkscrew
       @sudo_password = nil
     end
 
-    def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true)
+    def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false)
       original_command = command
 
       if command.start_with?('sudo ') && !command.start_with?('sudo -S ')
@@ -29,18 +29,52 @@ module Corkscrew
             raise "Could not initialize PTY" unless success
           end
 
-          channel.exec(command) do |_ch, success|
-            raise "Could not execute command: #{command.inspect}" unless success
+          if as_shell
+            channel.send_channel_request "shell" do |shell_channel, success|
+              raise "Could not initialize shell" unless success
 
-            channel.on_data do |_ch2, data|
-              @sudo_password = nil if data.include?('Sorry, try again.')
-              channel.send_data("#{sudo_password}\n") if password_requested(data)
-              result += data.gsub(@sudo_password.to_s, '')
-              print data.gsub(@sudo_password.to_s, '') if print_output
+              # shell_channel.send_data("echo BEGIN_CORKSCREW_COMMAND\n")
+              shell_channel.send_data(command + "\n")
+              # shell_channel.send_data("echo END_CORKSCREW_COMMAND\n")
+              shell_channel.send_data("exit\n")
+
+              command_started = false
+              shell_channel.on_data do |_ch2, data|
+                @sudo_password = nil if data.include?('Sorry, try again.')
+                shell_channel.send_data("#{sudo_password}\n") if password_requested(data)
+
+                if data.strip.include?("\n#{command}") || data.strip.start_with?("#{command}")
+                  command_started = true
+                  data = data.split("#{command}").last.strip
+                end
+
+                data = '' unless command_started
+
+                if data.strip.include?("exit\r\n") || data.strip.include?("exit\n") || data.strip.end_with?("exit")
+                  command_started = false
+                  data = data.strip.split("exit").first&.strip || ''
+                end
+
+                result += data.gsub(@sudo_password.to_s, '')
+                print data.gsub(@sudo_password.to_s, '') if print_output
+              end
+
+              shell_channel.wait
             end
+          else
+            channel.exec(command) do |_ch, success|
+              raise "Could not execute command: #{command.inspect}" unless success
 
-            channel.on_extended_data do |_ch2, _type, data|
-              $stderr.print(data)
+              channel.on_data do |_ch2, data|
+                @sudo_password = nil if data.include?('Sorry, try again.')
+                channel.send_data("#{sudo_password}\n") if password_requested(data)
+                result += data.gsub(@sudo_password.to_s, '')
+                print data.gsub(@sudo_password.to_s, '') if print_output
+              end
+
+              channel.on_extended_data do |_ch2, _type, data|
+                $stderr.print(data)
+              end
             end
           end
         end

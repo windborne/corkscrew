@@ -154,6 +154,35 @@ module Corkscrew
       end
     end
 
+    desc 'call [COMMANDS]', 'Runs commands in the deploy_path on the remote machine'
+    option :local, type: :boolean, desc: 'If true, will assume the deployment path is on the current machine'
+    option :shell, type: :boolean, desc: 'If true, will run the command as a shell', default: false
+    def call(*commands)
+      # Find the corkscrew.json config file path
+      config_path = nil
+      commands_start_index = 0
+      
+      # Check if first argument is a corkscrew.json file
+      if !commands.empty? && commands[0].end_with?('.json') && File.exist?(commands[0])
+        config_path = commands[0]
+        commands_start_index = 1
+      end
+      
+      # Get the actual commands to run
+      command_to_run = commands[commands_start_index..-1].join(' ')
+      
+      if command_to_run.empty?
+        puts "Error: No command provided"
+        puts "Usage: corkscrew call [corkscrew.json] <commands>"
+        return
+      end
+      
+      with_context(config_path) do
+        puts "Running command in #{@config.deploy_path}: #{command_to_run}"
+        command_runner.run_command(command_to_run, cwd: @config.deploy_path, as_shell: options[:shell])
+      end
+    end
+
     private
 
     def with_context(config_path = nil)

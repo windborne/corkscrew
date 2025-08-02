@@ -63,6 +63,7 @@ Full list of commands:
 - `restart` restarts the server
 - `start` starts the server
 - `stop` stops the server
+- `call` runs commands in the deploy_path on the remote machine. Can pass the `--shell` command to make it use a login shell.
 - `sync` syncs the code, but does nothing else
 - `build` runs the build script, syncing before by default
 - `nginx` sets up nginx for the app, generating the config before if needed
