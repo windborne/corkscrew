@@ -33,13 +33,16 @@ module Corkscrew
         end
 
         destination = @config.deploy_path
+        destinations = []
         unless @config.local?
           @config.require_ssh_config!
 
           @command_runner.run_command "mkdir -p #{destination}", print_output: false
           @command_runner.run_command "chown -R #{@config.ssh['user']} #{destination}", print_output: false
 
-          destination = "#{@config.ssh['user']}@#{@config.ssh['host']}:#{destination}"
+          destinations = @config.ssh_hosts.map { |host|
+            "#{@config.ssh['user']}@#{host}:#{destination}"
+          }
         end
 
         source = @config.root_dir
@@ -62,8 +65,6 @@ module Corkscrew
         end
 
         # Note: a known issue is that we don't use the ssh identity file, and instead rely on the user to `ssh-add` it
-
-        puts "Syncing #{source} to #{destination}"
         # puts "rsync #{flags.join(' ')} #{source} #{destination}"
 
         git_info_path = nil
@@ -77,7 +78,10 @@ module Corkscrew
           puts "Syncing git info to #{git_info_path}"
         end
 
-        CommandRunner.run_locally 'rsync', *flags, source, destination
+        destinations.each do |destination|
+          puts "Syncing #{source} to #{destination}"
+          CommandRunner.run_locally 'rsync', *flags, source, destination
+        end
 
         File.delete(git_info_path) unless git_info_path.nil?
       end

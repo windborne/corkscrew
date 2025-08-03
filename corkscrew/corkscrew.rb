@@ -196,7 +196,7 @@ module Corkscrew
         yield
         @context_depth -= 1
       ensure
-        @command_runner&.close_connection if config_depth_was_zero
+        @command_runner&.close_connections if config_depth_was_zero
       end
     end
 

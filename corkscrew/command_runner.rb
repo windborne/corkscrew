@@ -10,8 +10,27 @@ module Corkscrew
       @sudo_password = nil
     end
 
+
     def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false)
+      if connections.length <= 1
+        run_command_internal(command, connection: connections.first, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell)
+      else
+        puts "Running #{command} on #{connections.length} hosts in parallel"
+        threads = connections.each_with_index.map do |connection, worker_index|
+          Thread.new do
+            run_command_internal(command, connection: connection, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell, worker_index: worker_index)
+          end
+        end
+
+        threads.map(&:value).join
+      end
+    end
+
+    def run_command_internal(command, connection:, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false, worker_index: nil)
       original_command = command
+
+      # command = "WORKER_COUNT=#{connections.length} WORKER_INDEX=#{worker_index} #{command}" unless worker_index.nil? || connections.length <= 1
+      # puts "Running command: #{command}"
 
       if command.start_with?('sudo ') && !command.start_with?('sudo -S ')
         command = "echo -e \"#{sudo_password}\n\" | " + command.gsub(/sudo/, 'sudo -S')
@@ -22,6 +41,7 @@ module Corkscrew
         result = self.class.run_locally command, print_output: print_output, cwd: cwd
       else
         command = "cd #{cwd} && #{command}" unless cwd.nil?
+        command = "export WORKER_COUNT=#{connections.length} && export WORKER_INDEX=#{worker_index} && #{command}" unless worker_index.nil? || connections.length <= 1
         result = ''
 
         channel = connection.open_channel do |channel|
@@ -33,9 +53,7 @@ module Corkscrew
             channel.send_channel_request "shell" do |shell_channel, success|
               raise "Could not initialize shell" unless success
 
-              # shell_channel.send_data("echo BEGIN_CORKSCREW_COMMAND\n")
               shell_channel.send_data(command + "\n")
-              # shell_channel.send_data("echo END_CORKSCREW_COMMAND\n")
               shell_channel.send_data("exit\n")
 
               command_started = false
@@ -91,14 +109,16 @@ module Corkscrew
       result
     end
 
-    def connection
+    def connections
       @config.require_ssh_config!
-      @connection ||= Net::SSH.start(@config.ssh['host'], @config.ssh['user'], @config.ssh_options)
+      @connections ||= @config.ssh_hosts.map { |host|
+        Net::SSH.start(host, @config.ssh['user'], @config.ssh_options)
+      }
     end
 
-    def close_connection
-      @connection&.close if defined? @connection
-      @connection = nil
+    def close_connections
+      @connections&.each { |connection| connection.close } if defined? @connections
+      @connections = nil
     end
 
     private

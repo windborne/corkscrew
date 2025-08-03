@@ -173,7 +173,7 @@ However, we include a full list of options here for reference.
    "run_root": "", // the place where you want to run your code from, relative to root. Optional (since usually you run from root)
    "sync": "rsync", // how to sync code. May be rsync or git. Optional, defaults to rsync. You can also always edit code locally
    "ssh": { // the ssh parameters. Optional, but if not provided you will only be able to deploy locally
-      "host": "a.windbornesystems.com",
+      "host": "a.windbornesystems.com", // optionally may be an array to run on multiple nodes
       "user": "windborne",
       "identity": "/path/to/identity/file", // an SSH identity file for connecting 
       "no_pwd": false, // if true, will provide an empty string when asked for the password. Useful for some cloud environments.

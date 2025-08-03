@@ -172,6 +172,11 @@ module Corkscrew
       identity.gsub(/\A~/) { `echo ~`.strip }
     end
 
+    def ssh_hosts
+      hosts = fetch('ssh')&.dig('host')
+      [*hosts]
+    end
+
     def ssh_options
       ssh = fetch('ssh')
       {
