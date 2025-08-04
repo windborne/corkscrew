@@ -83,7 +83,11 @@ module Corkscrew
           CommandRunner.run_locally 'rsync', *flags, source, destination
         end
 
-        File.delete(git_info_path) unless git_info_path.nil?
+        begin
+          File.delete(git_info_path) unless git_info_path.nil?
+        rescue Errno::ENOENT
+          puts "Git info file #{git_info_path} already deleted; skipping"
+        end
       end
 
       def copy_file(source, destination)
