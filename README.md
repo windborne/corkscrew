@@ -63,7 +63,10 @@ Full list of commands:
 - `restart` restarts the server
 - `start` starts the server
 - `stop` stops the server
-- `call` runs commands in the deploy_path on the remote machine. Can pass the `--shell` command to make it use a login shell.
+- `call` runs commands in the deploy_path on the remote machine. 
+   Can pass the `--shell` command to make it use a login shell. 
+   Can pass the `--screen` flag to make it run the command in a screen session with the given name. This forces it to run in series and in a login shell.
+   Can pass the `--series` flag to make it run the command on all hosts in series instead of in parallel.
 - `sync` syncs the code, but does nothing else
 - `build` runs the build script, syncing before by default
 - `nginx` sets up nginx for the app, generating the config before if needed

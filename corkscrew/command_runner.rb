@@ -10,10 +10,15 @@ module Corkscrew
       @sudo_password = nil
     end
 
-
-    def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false)
+    def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false, screen_name: nil, in_series: false)
       if connections.length <= 1
-        run_command_internal(command, connection: connections.first, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell)
+        run_command_internal(command, connection: connections.first, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell, screen_name: screen_name)
+      elsif screen_name || in_series
+        # run command in series
+        puts "Running #{command} on #{connections.length} hosts in series"
+        connections.each_with_index do |connection, worker_index|
+          run_command_internal(command, connection: connection, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell, screen_name: screen_name, worker_index: worker_index)
+        end
       else
         puts "Running #{command} on #{connections.length} hosts in parallel"
         threads = connections.each_with_index.map do |connection, worker_index|
@@ -26,7 +31,7 @@ module Corkscrew
       end
     end
 
-    def run_command_internal(command, connection:, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false, worker_index: nil)
+    def run_command_internal(command, connection:, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false, screen_name: nil, worker_index: nil)
       original_command = command
 
       # command = "WORKER_COUNT=#{connections.length} WORKER_INDEX=#{worker_index} #{command}" unless worker_index.nil? || connections.length <= 1
@@ -49,32 +54,62 @@ module Corkscrew
             raise "Could not initialize PTY" unless success
           end
 
-          if as_shell
+          if as_shell || screen_name
             channel.send_channel_request "shell" do |shell_channel, success|
               raise "Could not initialize shell" unless success
 
-              shell_channel.send_data(command + "\n")
+              run_id = nil
+              if screen_name
+                run_id = "#{screen_name}_#{Time.now.strftime('%Y%m%d_%H%M%S')}"
+                # write command to run_id.sh
+                shell_channel.send_data("mkdir -p ~/screenlogs\n")
+                shell_channel.send_data("mkdir -p ~/corkscrew_cmds\n")
+                escaped_command = command.gsub("'", "'\\'")
+                shell_channel.send_data("echo '#{escaped_command}' > ~/corkscrew_cmds/#{run_id}.sh\n")
+                shell_channel.send_data("screen -S #{screen_name} -X \"^C\"\n") # send interrupt to screen
+                shell_channel.send_data("screen -ls #{screen_name} | grep -oE '[0-9]+\.' | cut -d. -f1 | xargs -r -I {} sh -c 'kill -INT {} && sleep 2 && kill -TERM {}'\n") # kill screen
+                shell_channel.send_data("screen -dm -S #{screen_name} -L -Logfile ~/screenlogs/#{run_id}.log bash ~/corkscrew_cmds/#{run_id}.sh\n")
+                shell_channel.send_data("echo -n \"Screen #{screen_name} started with PID: \"\n")
+                shell_channel.send_data("screen -ls | grep #{screen_name} || echo \"FAILED_TO_START_SCREEN\"\n")
+              else
+                shell_channel.send_data(command + "\n")
+              end
+              
               shell_channel.send_data("exit\n")
 
+              print_all = false
               command_started = false
+
               shell_channel.on_data do |_ch2, data|
                 @sudo_password = nil if data.include?('Sorry, try again.')
                 shell_channel.send_data("#{sudo_password}\n") if password_requested(data)
 
-                if data.strip.include?("\n#{command}") || data.strip.start_with?("#{command}")
-                  command_started = true
-                  data = data.split("#{command}").last.strip
+                if data.strip.include?("FAILED_TO_START_SCREEN") && !data.include?("echo \"FAILED_TO_START_SCREEN\"")
+                  puts "Failed to start screen #{screen_name}"
                 end
 
-                data = '' unless command_started
+                if data.strip.include?("\n#{command}") || data.strip.start_with?("#{command}")
+                  command_started = true
+                  data = data.split("#{command}").last.strip unless print_all
+                end
+
+                data = '' unless command_started || print_all
 
                 if data.strip.include?("exit\r\n") || data.strip.include?("exit\n") || data.strip.end_with?("exit")
                   command_started = false
-                  data = data.strip.split("exit").first&.strip || ''
+                  data = data.strip.split("exit").first&.strip || '' unless print_all
                 end
 
                 result += data.gsub(@sudo_password.to_s, '')
                 print data.gsub(@sudo_password.to_s, '') if print_output
+              end
+
+              if run_id
+                if worker_index.nil?
+                  puts "Screen #{screen_name} started; run_id: #{run_id}"
+                else
+                  puts "Screen #{screen_name} started on host #{connection.host} (worker #{worker_index}); run_id: #{run_id}"
+                end
               end
 
               shell_channel.wait
