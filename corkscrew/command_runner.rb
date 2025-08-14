@@ -194,16 +194,21 @@ module Corkscrew
       opts[:chdir] = cwd unless cwd.nil?
 
       Open3.popen2e(*command, opts) do |stdin, stdout_stderr, wait_thread|
-        Thread.new do
-          stdout_stderr.each { |l|
-            puts l if print_output
-            result += l
-          }
+        reader_thread = Thread.new do
+          begin
+            stdout_stderr.each { |l|
+              puts l if print_output
+              result += l
+            }
+          rescue IOError, Errno::EPIPE
+            # Stream closed while reading; safe to ignore.
+          end
         end
 
         stdin.close
 
         wait_thread.value
+        reader_thread.join
       end
 
       result
