@@ -11,7 +11,9 @@ module Corkscrew
     end
 
     def run_command(command, sudo_escalation: true, cwd: nil, print_output: true, print_sudo_escalation: true, as_shell: false, screen_name: nil, in_series: false)
-      if connections.length <= 1
+      if @config.local?
+        run_command_internal(command, connection: nil, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell, screen_name: screen_name)
+      elsif connections.length <= 1
         run_command_internal(command, connection: connections.first, sudo_escalation: sudo_escalation, cwd: cwd, print_output: print_output, print_sudo_escalation: print_sudo_escalation, as_shell: as_shell, screen_name: screen_name)
       elsif screen_name || in_series
         # run command in series

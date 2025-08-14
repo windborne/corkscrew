@@ -74,6 +74,7 @@ Full list of commands:
 - `setup_logs` sets up log forwarding to betterstack
 - `metrics_node` sets up server to export metrics to prometheus
 - `metrics_host` sets up server to have metrics in a grafana dashboard
+- `version` prints the version of corkscrew
 
 ### Service managers: systemd vs screen
 Tl;dr: use systemd if at all possible.
@@ -237,7 +238,7 @@ Run `sudo nginx -t` to test the nginx configuration, then run `sudo nginx -s` to
 3. Compatibility with existing tools. You should be able to deploy completely manually and not have it break things, and also be able to go outside the system whenever you want
 
 ### Packaging a new version
-Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/phusion/traveling-ruby).
+Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/you54f/traveling-ruby).
 This enables us to distribute an executable without any dependencies: users don't need to worry about installing ruby or anything else.
 Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
 To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20230803](traveling-ruby/shared/gemfiles/20210107)) modified.
