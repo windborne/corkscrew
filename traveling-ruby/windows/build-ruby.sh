@@ -15,6 +15,9 @@ CACHE_DIR=
 OUTPUT_DIR=
 ARCHITECTURE=x86_64
 RUBY_VERSION=${RUBY_VERSIONS[$LAST_RUBY_VERSION_INDEX]}
+# if [[ "$RUBY_VERSION" < "3.0" ]]; then
+#     BUNDLER_VERSION="2.4.22"
+# fi
 RELEASE_NUM=1
 
 function usage()
@@ -118,13 +121,17 @@ EOF
 parse_options "$@"
 CACHE_DIR=`cd "$CACHE_DIR" && pwd`
 OUTPUT_DIR=`cd "$OUTPUT_DIR" && pwd`
-
+if [[ "$RUBY_VERSION" == "3.4.4" ]]; then
+	RELEASE_NUM=2
+fi
 
 ########
 
 
 if [[ "$ARCHITECTURE" = "x86_64" ]]; then
 	RUBY_FILE_ARCH=x64
+elif [[ "$ARCHITECTURE" = "arm64" ]]; then
+	RUBY_FILE_ARCH=arm
 else
 	RUBY_FILE_ARCH="$ARCHITECTURE"
 fi
@@ -169,6 +176,8 @@ echo
 header "Analyzing Ruby..."
 if [[ "$OS" =~ Windows ]]; then
 	export PATH="$OUTPUT_DIR/bin:$PATH"
+else
+	chmod +x $OUTPUT_DIR/bin/gem
 fi
 RUBY_COMPAT_VERSION=`grep '"ruby_version"' "$OUTPUT_DIR"/lib/ruby/*/*/rbconfig.rb | sed -E 's/.*=//; s/.*"(.*)".*/\1/'`
 RUBY_ARCH=`grep '"arch"' "$OUTPUT_DIR"/lib/ruby/*/*/rbconfig.rb | sed -E 's/.*=//; s/.*"(.*)".*/\1/'`

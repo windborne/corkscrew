@@ -14,7 +14,7 @@
 curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh | sh -s -- --help
 Usage: sh [-v <version>] [-d <release-date>] [--set-path] [--clean-install] [--ci]
 
-  -v <version>          Ruby version to install (default: 3.2.2)
+  -v <version>          Ruby version to install (default: 3.2.9)
   -d <release-date>     Release date of the traveling ruby package to download (default: latest)
   --set-path            Add the traveling ruby bin path to the PATH environment variable (default: false)
   --clean-install       Remove any existing traveling ruby installation before installing (default: false)
@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: test pact cli action
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: curl -fsSL https://raw.githubusercontent.com/you54f/traveling-ruby/main/cli.sh | sh -s -- --ci -v 2.6.10
       - run: ruby --version
 ```
@@ -57,7 +57,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: test pact cli action
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: you54f/traveling-ruby@main
       - run: ruby --version
 ```
@@ -68,8 +68,8 @@ jobs:
 https://hub.docker.com/r/you54f/traveling-ruby/tags
 
 
-docker run --platform=linux/arm64 --rm -it you54f/traveling-ruby:3.3.0-preview1 --version
-docker run --platform=linux/amd64 --rm -it you54f/traveling-ruby:3.3.0-preview1 --version
+docker run --platform=linux/arm64 --rm -it you54f/traveling-ruby:3.3.0 --version
+docker run --platform=linux/amd64 --rm -it you54f/traveling-ruby:3.3.0 --version
 docker run --platform=linux/arm64 --rm -it you54f/traveling-ruby:3 --version
 docker run --platform=linux/amd64 --rm -it you54f/traveling-ruby:3 --version
 docker run --platform=linux/arm64 --rm -it you54f/traveling-ruby:3.1 --version

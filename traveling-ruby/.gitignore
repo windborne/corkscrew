@@ -1,9 +1,12 @@
 /linux/runtime
 /linux/output
 /linux/traveling-ruby-gems*
+/alpine/runtime
+/alpine/output
+/alpine/traveling-ruby-gems*
 /osx/traveling-ruby-gems*
 /windows/traveling-ruby-gems*
-/osx/runtime
+/osx/runtime*
 /osx/output
 /osx/work
 /windows/cache

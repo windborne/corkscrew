@@ -4,11 +4,11 @@ require_relative './corkscrew/version'
 
 PACKAGE_NAME = "corkscrew"
 VERSION = Corkscrew::VERSION
-TRAVELING_RUBY_VERSION = "20230803-3.0.6"
+TRAVELING_RUBY_VERSION = "20250625-3.4.5"
 
 # right now you can only package on the same architecture you'll deploy to
 desc "Package your app"
-task :package => ['package:linux:x86_64', 'package:osx']
+task :package => ['package:linux:x86_64', 'package:osx:x86_64', 'package:osx:arm64']
 
 namespace :package do
   namespace :linux do
@@ -19,14 +19,22 @@ namespace :package do
   end
 
   desc "Package your app for OS X"
-  task :osx => [:bundle_install] do
-    create_package("osx-x86_64")
+  namespace :osx do
+    desc "Package your app for OS X x86_64"
+    task :x86_64 => [:bundle_install] do
+      create_package("osx-x86_64")
+    end
+
+    desc "Package your app for OS X arm64"
+    task :arm64 => [:bundle_install] do
+      create_package("osx-arm64")
+    end
   end
 
   desc "Install gems to local directory"
   task :bundle_install do
-    if RUBY_VERSION !~ /^3\.0\./
-      abort "You can only 'bundle install' using Ruby 3.0, because that's what Traveling Ruby uses."
+    if RUBY_VERSION !~ /^3\.4\./
+      abort "You can only 'bundle install' using Ruby 3.4, because that's what Traveling Ruby uses."
     end
     sh "rm -rf packaging/tmp"
     sh "mkdir packaging/tmp"
@@ -59,7 +67,7 @@ def create_package(target)
   sh "cp Gemfile Gemfile.lock #{package_dir}/lib/vendor/"
   sh "mkdir #{package_dir}/lib/vendor/.bundle"
   sh "cp packaging/bundler-config #{package_dir}/lib/vendor/.bundle/config"
-  %w[bcrypt_pbkdf-1.1.0 ed25519-1.3.0].each do |gem|
+  %w[bcrypt_pbkdf-1.1.1 ed25519-1.4.0].each do |gem|
     sh "tar -xzf traveling-ruby/#{target.split('-').first}/traveling-ruby-gems-#{TRAVELING_RUBY_VERSION}-#{target}/#{gem}.tar.gz " +
          "-C #{package_dir}/lib/vendor/ruby"
   end

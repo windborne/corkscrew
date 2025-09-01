@@ -242,9 +242,43 @@ Corkscrew is packaged into an executable with [Traveling Ruby](https://github.co
 This enables us to distribute an executable without any dependencies: users don't need to worry about installing ruby or anything else.
 Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
 To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20230803](traveling-ruby/shared/gemfiles/20210107)) modified.
+In order to cross-compile for `x86_64` from `arm64` hosts, you must install Rosetta (`sudo softwareupdate --install-rosetta --agree-to-license`).
 
 To build, run either `rake package:osx` or `rake package:linux:x86_64`, or both with `rake package`.
 This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.
 OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
 
 Once built, add it to github and to s3 (https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz)
+
+#### Updating traveling ruby
+
+Sometimes you will want to update traveling ruby, eg to modernize the underlying ruby version.
+Since we have it copied without git, this requires the following.
+
+**1. Pull in the new code**
+```
+rm -rf traveling-ruby
+git clone https://github.com/you54f/traveling-ruby
+rm -rf traveling-ruby/.git
+```
+
+**2. Select native extensions**
+Then, edit `traveling-ruby/shared/gemfiles/*/Gemfile`:
+```
+# comment everything out then add
+gem 'ed25519', '>= 1.2', '< 2.0'
+gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
+```
+
+**3. Build base binaries**
+In `traveling-ruby/osx`, run `ARCHITECTURES=arm64 rake` and `ARCHITECTURES=x86_64 rake`.
+
+In `traveling-ruby/linux`, run `rake`.
+
+**4. Update configs**
+You will also need to edit `Rakefile`.
+Ensure that `TRAVELING_RUBY_VERSION` is up-to-date, as is the version check in the `task :bundle_install`.
+
+You _might_ also need to update the gem versions in `create_package`.
+
+Now it should be possible to run `rake package`.

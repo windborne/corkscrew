@@ -1,6 +1,6 @@
 env:
   REPO: you54f/traveling-ruby
-  PKG_DATE: 20230803
+  PKG_DATE: 20250625
   NEXT_TAG: rel-$PKG_DATE
   GITHUB_TOKEN: ENCRYPTED[7f3663f35400d0e1f8e0fec456af6b75a07b0fd2d0632fe1697b8fb73af5e78245144216288d88d2daa681ccd159e07d]
 
@@ -88,28 +88,40 @@ download_task:
   script: ls
 
 RUBY_VERSIONS_LATEST_MATRIX: &RUBY_VERSIONS_LATEST_MATRIX
-  RUBY_VERSIONS: 3.3.0-preview1
-  RUBY_VERSIONS: 3.2.2
-  RUBY_VERSIONS: 3.1.4
-  RUBY_VERSIONS: 3.0.6
-  RUBY_VERSIONS: 2.7.8
-  RUBY_VERSIONS: 2.6.10
+  RUBY_VERSIONS: 3.4.5
+  RUBY_VERSIONS: 3.3.9
+  RUBY_VERSIONS: 3.2.9
+  # RUBY_VERSIONS: 3.1.6
+  # RUBY_VERSIONS: 3.0.7
+  # RUBY_VERSIONS: 2.7.8
+  # RUBY_VERSIONS: 2.6.10
 
 RUBY_VERSIONS_MATRIX_MACOS: &RUBY_VERSIONS_MATRIX_MACOS
-  RUBY_VERSIONS: 3.3.0-preview1
-  RUBY_VERSIONS: 3.2.2
-  RUBY_VERSIONS: 3.1.4
-  RUBY_VERSIONS: 3.0.6
+  RUBY_VERSIONS: 3.4.5
+  RUBY_VERSIONS: 3.3.9
+  RUBY_VERSIONS: 3.2.9
+  # RUBY_VERSIONS: 3.1.6
+  # RUBY_VERSIONS: 3.0.7
 
 RUBY_VERSIONS_MATRIX_LINUX: &RUBY_VERSIONS_MATRIX_LINUX
-  RUBY_VERSIONS: 3.3.0-preview1
-  RUBY_VERSIONS: 3.2.2
+  RUBY_VERSIONS: 3.4.5
+  RUBY_VERSIONS: 3.3.9
+  RUBY_VERSIONS: 3.2.9
+  # RUBY_VERSIONS: 3.1.6
+  # RUBY_VERSIONS: 3.0.7
+  # RUBY_VERSIONS: 2.6.10
+  # RUBY_VERSIONS: 3.0.7
   # RUBY_VERSIONS: 2.7.8
-  RUBY_VERSIONS: 2.6.10
-  RUBY_VERSIONS: 3.1.2
-  RUBY_VERSIONS: 3.0.4
-  # 3.1.2 and 3.0.4 are not the latest, but the latest that will build
-  # for those branch on linux
+
+RUBY_VERSIONS_MATRIX_LINUX_ALPINE: &RUBY_VERSIONS_MATRIX_LINUX_ALPINE
+  RUBY_VERSIONS: 3.4.5
+  RUBY_VERSIONS: 3.3.9
+  RUBY_VERSIONS: 3.2.9
+  # RUBY_VERSIONS: 3.1.6
+  # RUBY_VERSIONS: 3.0.7
+  # RUBY_VERSIONS: 2.6.10
+  # # RUBY_VERSIONS: 3.0.7
+  # # RUBY_VERSIONS: 2.7.8
 
 rake_package_and_test: &rake_package_and_test
   package_script: cd $PLATFORM && rake
@@ -153,11 +165,10 @@ linux_arm64_packager_docker_builder:
     PLATFORM: linux
     ARCHITECTURES: arm64
   <<: *ENV_CHECK_SCRIPT
-  <<: *rake_package_and_test
   broken_version_remover_script: |
-    sed -ie '/3.1.4/d' RUBY_VERSIONS.txt
-    sed -ie '/3.0.6/d' RUBY_VERSIONS.txt
+    sed -ie 's/3.0.7/3.0.7/' RUBY_VERSIONS.txt
     sed -ie '/2.7.8/d' RUBY_VERSIONS.txt
+  <<: *rake_package_and_test
   <<: *INSTALL_GH_CLI
   <<: *UPLOAD_TASK
   <<: *BINARY_ATRIFACTS
@@ -172,8 +183,7 @@ linux_x64_packager_docker_builder:
     ARCHITECTURES: x86_64
   <<: *ENV_CHECK_SCRIPT
   broken_version_remover_script: |
-    sed -ie '/3.1.4/d' RUBY_VERSIONS.txt
-    sed -ie '/3.0.6/d' RUBY_VERSIONS.txt
+    sed -ie 's/3.0.7/3.0.7/' RUBY_VERSIONS.txt
     sed -ie '/2.7.8/d' RUBY_VERSIONS.txt
   <<: *rake_package_and_test
   <<: *INSTALL_GH_CLI
@@ -221,6 +231,38 @@ linux_x64_matrix_docker_builder:
   <<: *UPLOAD_TASK
   <<: *BINARY_ATRIFACTS
 
+linux_arm64_alpine_matrix_docker_builder:
+  cpu: 4
+  memory: 4G
+  only_if: $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix-linux-musl-arm64\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(alpine\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix\).*' || $CIRRUS_BRANCH =~ 'main'
+  env:
+    CIRRUS_ARCH: arm64
+    PLATFORM: alpine
+    ARCHITECTURES: arm64
+    matrix:
+      *RUBY_VERSIONS_MATRIX_LINUX_ALPINE
+  <<: *ENV_CHECK_SCRIPT
+  <<: *rake_package_and_test_docker
+  <<: *INSTALL_GH_CLI
+  <<: *UPLOAD_TASK
+  <<: *BINARY_ATRIFACTS
+
+linux_x64_alpine_matrix_docker_builder:
+  cpu: 4
+  memory: 4G
+  only_if: $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix-linux-musl-x86_64\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(alpine\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix\).*' || $CIRRUS_BRANCH =~ 'main'
+  env:
+    CIRRUS_ARCH: amd64
+    PLATFORM: alpine
+    ARCHITECTURES: x86_64
+    matrix:
+      *RUBY_VERSIONS_MATRIX_LINUX_ALPINE
+  <<: *ENV_CHECK_SCRIPT
+  <<: *rake_package_and_test_docker
+  <<: *INSTALL_GH_CLI
+  <<: *UPLOAD_TASK
+  <<: *BINARY_ATRIFACTS
+
 # ========================================
 # MacOS
 # ========================================
@@ -251,10 +293,11 @@ cirrus_cli_setup: &cirrus_cli_setup
 download_macos_runtime: &download_macos_runtime
   download_script: |
     echo "downloading pre-packaged runtime"
-    curl -L -o $PLATFORM/runtime.tar.gz https://github.com/YOU54F/traveling-ruby/releases/download/rel-20230529-next/osx-runtime-$ARCHITECTURE.tar.gz
+    curl -L -o $PLATFORM/runtime.tar.gz https://github.com/YOU54F/traveling-ruby/releases/download/rel-20240116/osx-runtime-$ARCHITECTURES.tar.gz
     echo "unpacking pre-packaged runtime"
     mkdir -p $PLATFORM/runtime
-    [[ -f "$PLATFORM/runtime.tar.gz" ]] && tar -xzf $PLATFORM/runtime.tar.gz && rm -rf $PLATFORM/runtime.tar.gz && echo "unpacked osx-runtime-$ARCHITECTURE.tar.gz" && ls -al $PLATFORM/runtime
+    [[ -f "$PLATFORM/runtime.tar.gz" ]] && cd $PLATFORM && tar -xzf ../$PLATFORM/runtime.tar.gz && rm -rf ../$PLATFORM/runtime.tar.gz && echo "unpacked osx-runtime-$ARCHITECTURES.tar.gz" && ls -al ../$PLATFORM/runtime
+    cd ..
     ls $PLATFORM
 
 macos_check: &macos_check
@@ -275,7 +318,7 @@ set_bundler_version: &set_bundler_version
     $USE_ROSETTA rbenv global system
     $USE_ROSETTA sudo gem install bundler -v $(cat BUNDLER_VERSION.txt)
     $USE_ROSETTA bundler --version
-    $USE_ROSETTA rbenv global 3.2.2
+    $USE_ROSETTA rbenv global 3.2.9
 
 macos_check_task: 
   only_if: $CIRRUS_CHANGE_TITLE =~ 'ci\(mac-check\).*'
@@ -315,7 +358,7 @@ macos_packager_task:
   <<: *cirrus_cli_setup
   # <<: *set_bundler_version
   <<: *macos_stash_conflicting_paths
-  # <<: *download_macos_runtime
+  <<: *download_macos_runtime
   package_script: cd $PLATFORM && rake
   package_script: cd $PLATFORM && rake 
   <<: *BINARY_ATRIFACTS
@@ -334,7 +377,7 @@ macos_arm64_matrix_task:
   macos_instance:
     # image: traveling-ruby-builder
     # image: ghcr.io/cirruslabs/macos-ventura-vanilla:latest
-    image: ghcr.io/cirruslabs/macos-ventura-base:latest
+    image: ghcr.io/cirruslabs/macos-sonoma-base:latest
   env:
     PLATFORM: osx
     ARCHITECTURES: arm64
@@ -350,10 +393,11 @@ macos_arm64_matrix_task:
   <<: *BINARY_ATRIFACTS
 
 macos_x86_64_matrix_task:
+  timeout_in: 120m
   only_if: $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix-macos\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix-macos-x86_64\).*' || $CIRRUS_BRANCH =~ 'main'
   macos_instance:
     # image: traveling-ruby-builder
-    image: ghcr.io/cirruslabs/macos-ventura-base:latest
+    image: ghcr.io/cirruslabs/macos-sonoma-base:latest
   env:
     PLATFORM: osx
     ARCHITECTURES: x86_64
@@ -378,16 +422,14 @@ windows_packager_task:
   only_if: $CIRRUS_CHANGE_TITLE =~ 'ci\(packager-windows\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(packager\).*' || $CIRRUS_CHANGE_TITLE =~ 'ci\(matrix\).*' || $CIRRUS_BRANCH =~ 'main'
   env:
     PLATFORM: windows
-    matrix:
-      - script: rake --trace
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-base:latest
   windows_setup_script: |
     brew install sevenzip
   <<: *cirrus_cli_setup
-  no_version_remover_script: |
-    sed -ie '/3.3.0-preview1/d' RUBY_VERSIONS.txt
-  package_script: cd $PLATFORM && rake
+  package_script: |
+    cd $PLATFORM && rake
+    ARCHITECTURES=arm64 RUBY_VERSIONS=3.4.5 rake --trace
   <<: *UPLOAD_TASK
   <<: *BINARY_ATRIFACTS
 
@@ -518,12 +560,12 @@ run_commands: &run_commands
   install_homebrew_script: *install_homebrew_script
   test_homebrew_script: *test_homebrew_script
 
-cli_arm_task:
-  arm_container:
-    image: ubuntu:22.04
-  <<: *run_commands
+# cli_arm_task:
+#   arm_container:
+#     image: ubuntu:22.04
+#   <<: *run_commands
 
-cli_amd_task:
-  container:
-    image: ubuntu:22.04
-  <<: *run_commands
+# cli_amd_task:
+#   container:
+#     image: ubuntu:22.04
+#   <<: *run_commands

@@ -1,7 +1,7 @@
 name: Test cli.sh
 
 on:
-  push:
+  # push:
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [macos-latest]
         shell: [bash, sh]
-        ruby-version: [3.0.6,3.1.4,3.2.2,3.3.0-preview1]
+        ruby-version: [3.2.9,3.3.0]
       fail-fast: false
     defaults:
       run:
@@ -26,7 +26,7 @@ jobs:
           ruby --version
           which ruby
           brew uninstall ruby@3.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: ./cli.sh --ci -v ${{ matrix.ruby-version }}
         name: install via cli.sh
       - run: ruby --version
@@ -39,7 +39,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         shell: [bash, sh]
-        ruby-version: [2.6.10,3.0.4,3.1.2,3.2.2,3.3.0-preview1]
+        ruby-version: [2.6.10,3.0.7,3.1.2,3.2.9,3.3.0]
       fail-fast: false
     defaults:
       run:
@@ -57,7 +57,7 @@ jobs:
           ruby --version || echo "ruby not found as expected"
           /home/linuxbrew/.linuxbrew/bin/brew --version
           sudo rm -rf /home/linuxbrew
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: ./cli.sh --ci -v ${{ matrix.ruby-version }}
         name: install via cli.sh
       - run: ruby --version
@@ -70,13 +70,13 @@ jobs:
   #   strategy:
   #     matrix:
   #       shell: [cmd, powershell, pwsh, bash, sh]
-  #       ruby-version: [2.6.10,3.0.4,3.1.2,3.2.2,3.3.0-preview1]
+  #       ruby-version: [2.6.10,3.0.7,3.1.2,3.2.9,3.3.0]
   #     fail-fast: false
   #   defaults:
   #     run:
   #       shell: ${{ matrix.shell }}
   #   steps:
-  #     - uses: actions/checkout@v3
+  #     - uses: actions/checkout@v4
   #     - run: |
   #         "$HOME\.traveling-ruby\bin\" >> $env:GITHUB_PATH
   #       shell: powershell

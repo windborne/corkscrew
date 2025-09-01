@@ -90,16 +90,16 @@ GEMS_TO_TEST=(
 	rinda/ring 
 	rinda/tuplespace
 	openssl readline rugged charlock_holmes unf_ext bcrypt RedCloth
-	eventmachine escape_utils json nokogiri ffi pg posix-spawn
+	eventmachine escape_utils json nokogiri ffi pg
 	thin sqlite3 yajl puma/puma_http11 kgio raindrops fast-stemmer
 	hitimes redcarpet curses
 	mysql2
 	)
 GEMS_TO_FAIL=(
 	"win32ole"
+	"win32-registry"
 	) 
 GEMS_TO_SKIP=(
-	mysql2
 	"sinatra"
 	"nio4r" 
 	test-unit 

@@ -15,6 +15,9 @@ RUNTIME_DIR=
 OUTPUT_DIR=
 ARCHITECTURE=$(uname -m)
 RUBY_VERSION=${RUBY_VERSIONS[0]}
+# if [[ "$RUBY_VERSION" < "3.0" ]]; then
+#     BUNDLER_VERSION="2.4.22"
+# fi
 WORKDIR=
 OWNS_WORKDIR=true
 CONCURRENCY=$(sysctl -n hw.ncpu)
@@ -257,6 +260,9 @@ header "Preparing Ruby source code..."
 # export CPPFLAGS="-w"
 # export CXXFLAGS="-w"
 # export CFLAGS="-w"
+export CPPFLAGS="-Wno-error=incompatible-function-pointer-types -Wno-int-conversion"
+export CXXFLAGS="-Wno-error=incompatible-function-pointer-types -Wno-int-conversion"
+export CFLAGS="-Wno-error=incompatible-function-pointer-types -Wno-int-conversion"
 
 export PATH="$RUNTIME_DIR/bin:$PATH"
 export LIBRARY_PATH="$RUNTIME_DIR/lib"
@@ -354,8 +360,8 @@ if [[ "$GEMFILE" != "" ]]; then
 	fi
 
 	# Update RubyGems to the specified version.
-
-
+	
+	
 
 	header "Updating RubyGems..."
 
@@ -378,11 +384,10 @@ if [[ "$GEMFILE" != "" ]]; then
 	fi
 
 	export BUNDLE_BUILD__NOKOGIRI="--with-xml2-include=$RUNTIME_DIR/include/libxml2"
+	export BUNDLE_BUILD__PSYCH="--with-libyaml-include=$RUNTIME_DIR/include"
 	export BUNDLE_BUILD__FFI="--use-system-libraries"
 	export BUNDLE_BUILD__MYSQL2="--with-mysql_config"
 	export BUNDLE_BUILD__CHARLOCK_HOLMES="--with-icu-dir=$RUNTIME_DIR"
-	export BUNDLE_BUILD__ED25519="--with-cppflags=\"-I$RUNTIME_DIR/include/openssl -fdeclspec\""
-	export BUNDLE_BUILD__BCRYPT_PBKDF="--with-cppflags=\"-I$RUNTIME_DIR/include/openssl -fdeclspec\""
 
 	# Run bundle install.
 	for GEMFILE in "${GEMFILES[@]}"; do
@@ -410,7 +415,11 @@ find . -name '*.bundle'
 find . -name '*.dylib'
 (
 	set -o pipefail
-	find . -name '*.bundle' | xargs strip -S
+	if (( RUBY_MAJOR > 3 )) || (( RUBY_MAJOR == 3 && RUBY_MINOR >= 4 )); then
+		find . -name '*.bundle' ! -path '*dSYM*'| xargs strip -S
+	else
+		find . -name '*.bundle' | xargs strip -S
+	fi
 	find . -name '*.dylib' | xargs strip -S
 )
 [[ $? == 0 ]]
@@ -422,7 +431,7 @@ run rm -rf lib/{libruby*static.a,pkgconfig}
 # NOTE:- Updated the above to consider the below library, otherwise
 # the size of our bundle doubles
 # 	find output -type f -exec du -ah {} + | sort -rh | head -n 10
-#  21M    output/3.2.2-arm64/lib/libruby.3.2-static.a
+#  21M    output/3.2.9-arm64/lib/libruby.3.2-static.a
 
 # run rm -rf lib/ruby/$RUBY_COMPAT_VERSION/rdoc/generator/
 run rm -rf lib/ruby/gems/$RUBY_COMPAT_VERSION/cache/*

@@ -4,7 +4,6 @@ ARCHITECTURES = ENV['ARCHITECTURES'] ? [].push(ENV['ARCHITECTURES']) : ["x86_64"
 
 task :default => :package
 
-
 desc "Create packages for all Ruby versions (#{RUBY_VERSIONS.join(' ')} and ARCHITECTURES (#{ARCHITECTURES.join(' ')})"
 task :package do
   # Do nothing

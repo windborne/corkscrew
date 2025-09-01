@@ -288,29 +288,59 @@ fi
 
 TOTAL_TOOLS=6
 TOTAL_LIBS=14
-CCACHE_VERSION=4.6.1
-CMAKE_VERSION=3.23.2
+CCACHE_VERSION=4.9
+# https://github.com/ccache/ccache/releases
+CMAKE_VERSION=3.31.8
+# https://github.com/Kitware/CMake/releases/
 PKG_CONFIG_VERSION=0.29.2
+# https://pkgconfig.freedesktop.org/releases/
 AUTOCONF_VERSION=2.71
+# AUTOCONF_VERSION=2.72
+# https://ftp.gnu.org/gnu/autoconf/
 AUTOMAKE_VERSION=1.16.5
+# https://ftp.gnu.org/gnu/automake/
 LIBTOOL_VERSION=2.4.7
-OPENSSL_VERSION=1.1.1p
-NCURSES_VERSION=6.1 # the newer 6.2 and 6.3 are not build on ARM64
-LIBEDIT_VERSION=20210910-3.1
-LIBEDIT_DIR_VERSION=20210910-3.1
-GMP_VERSION=6.2.1
-GMP_DIR_VERSION=6.2.1
-LIBFFI_VERSION=3.4.2
+# https://ftp.gnu.org/gnu/libtool/
+
+# if [[ "$OPENSSL_1_1_LEGACY" = true ]]; then
+# 	OPENSSL_VERSION=1.1.1w
+# else
+OPENSSL_VERSION=3.2.0
+# fi
+# OPENSSL_VERSION=3.0.12
+# OPENSSL_VERSION=3.1.6
+# https://www.openssl.org/source/
+NCURSES_VERSION=6.4
+# https://ftp.gnu.org/pub/gnu/ncurses/
+# https://thrysoee.dk/editline/
+LIBEDIT_VERSION=20230828-3.1
+LIBEDIT_DIR_VERSION=20230828-3.1
+# https://gmplib.org/download/gmp/
+GMP_VERSION=6.3.0
+GMP_DIR_VERSION=6.3.0
+# https://github.com/libffi/libffi/releases/
+LIBFFI_VERSION=3.5.1
+# https://pyyaml.org/download/libyaml/
 LIBYAML_VERSION=0.2.5
-SQLITE3_VERSION=3340000
-XZ_VERSION=5.2.5
-MYSQL_LIB_VERSION=6.1.5
-POSTGRESQL_VERSION=13.1
-ICU_RELEASE_VERSION=71-1
-ICU_FILE_VERSION=71_1
-LIBSSH2_VERSION=1.10.0
-LIBXML2_VERSION=2.9.12
-LIBXSLT_VERSION=1.1.34
+# https://www.sqlite.org/download.html
+SQLITE3_VERSION=3450000
+SQLITE3_VERSION_YEAR=2024
+# https://tukaani.org/xz/
+XZ_VERSION=5.4.5
+MYSQL_LIB_VERSION=6.1.9
+# MYSQL_LIB_VERSION=8.3.0
+POSTGRESQL_VERSION=15.5
+# ICU_RELEASE_VERSION=71-1
+# ICU_FILE_VERSION=71_1
+# https://github.com/unicode-org/icu/releases/
+ICU_RELEASE_VERSION=74-1
+ICU_FILE_VERSION=74_1
+# https://www.libssh2.org/download/
+LIBSSH2_VERSION=1.11.0
+# http://xmlsoft.org/download
+LIBXML2_VERSION=2.9.14
+LIBXSLT_VERSION=1.1.43
+# http://xmlsoft.org/download
 export PATH="$RUNTIME_DIR/bin:$PATH"
 export LIBRARY_PATH="$RUNTIME_DIR/lib"
 export PKG_CONFIG_PATH="$RUNTIME_DIR/lib/pkgconfig:/usr/lib/pkgconfig"
@@ -328,9 +358,9 @@ cd "$RUNTIME_DIR"
 echo
 
 # To many warnings, suppress them all (disable in case of troubleshooting)
-# export CPPFLAGS="-w"
-# export CXXFLAGS="-w"
-# export CFLAGS="-w"
+export CPPFLAGS="-Wno-error=unused-command-line-argument"
+export CXXFLAGS="-Wno-error=unused-command-line-argument"
+export CFLAGS="-Wno-error=unused-command-line-argument"
 
 header "Installing tool 1/$TOTAL_TOOLS: CMake..."
 if $SKIP_CMAKE; then
@@ -389,12 +419,18 @@ elif [[ ! -e "$RUNTIME_DIR/bin/pkg-config" ]] || $FORCE_PKG_CONFIG; then
 	echo "Entering $RUNTIME_DIR/pkg-config-$PKG_CONFIG_VERSION"
 	pushd pkg-config-$PKG_CONFIG_VERSION >/dev/null
 
+	export CPPFLAGS="-Wno-error=unused-command-line-argument -Wno-int-conversion"
+	export CXXFLAGS="-Wno-error=unused-command-line-argument -Wno-int-conversion"
+	export CFLAGS="-Wno-error=unused-command-line-argument -Wno-int-conversion"
 	run ./configure --prefix="$RUNTIME_DIR" --with-internal-glib --build=$DEPLOY_TARGET
 	run make -j$CONCURRENCY
 	run make install
 	echo "Entering $RUNTIME_DIR"
 	popd >/dev/null
 	run rm -rf pkg-config-$PKG_CONFIG_VERSION
+	export CPPFLAGS="-Wno-error=unused-command-line-argument"
+	export CXXFLAGS="-Wno-error=unused-command-line-argument"
+	export CFLAGS="-Wno-error=unused-command-line-argument"
 else
 	echo "Already installed."
 fi
@@ -488,14 +524,26 @@ elif [[ ! -e "$RUNTIME_DIR/lib/openssl-ok" ]] || $FORCE_OPENSSL; then
 	run strip bin/openssl
 	run strip -S lib/libcrypto.dylib
 	run strip -S lib/libssl.dylib
-	run install_name_tool -id "@rpath/libssl.1.1.dylib" \
-		"$RUNTIME_DIR/lib/libssl.1.1.dylib"
+
+	# if [[ "$OPENSSL_1_1_LEGACY" = true ]]; then
+	# 	run install_name_tool -id "@rpath/libssl.1.1.dylib" \
+	# 		"$RUNTIME_DIR/lib/libssl.1.1.dylib"
+	# 	run install_name_tool -change \
+	# 		"$RUNTIME_DIR/lib/libcrypto.1.1.dylib" \
+	# 		"@rpath/libcrypto.1.1.dylib" \
+	# 		"$RUNTIME_DIR/lib/libssl.1.1.dylib"
+	# 	run install_name_tool -id "@rpath/libcrypto.1.1.dylib" \
+	# 		"$RUNTIME_DIR/lib/libcrypto.1.1.dylib"
+	# else
+	run install_name_tool -id "@rpath/libssl.3.dylib" \
+		"$RUNTIME_DIR/lib/libssl.3.dylib"
 	run install_name_tool -change \
-		"$RUNTIME_DIR/lib/libcrypto.1.1.dylib" \
-		"@rpath/libcrypto.1.1.dylib" \
-		"$RUNTIME_DIR/lib/libssl.1.1.dylib"
-	run install_name_tool -id "@rpath/libcrypto.1.1.dylib" \
-		"$RUNTIME_DIR/lib/libcrypto.1.1.dylib"
+		"$RUNTIME_DIR/lib/libcrypto.3.dylib" \
+		"@rpath/libcrypto.3.dylib" \
+		"$RUNTIME_DIR/lib/libssl.3.dylib"
+	run install_name_tool -id "@rpath/libcrypto.3.dylib" \
+		"$RUNTIME_DIR/lib/libcrypto.3.dylib"
+	# fi
 
 	run sed -i '' 's/^Libs:.*/Libs: -L${libdir} -lcrypto -lz -ldl -lpthread/' "$RUNTIME_DIR"/lib/pkgconfig/libcrypto.pc
 	run sed -i '' '/^Libs.private:.*/d' "$RUNTIME_DIR"/lib/pkgconfig/libcrypto.pc
@@ -517,7 +565,7 @@ elif [[ ! -e "$RUNTIME_DIR/lib/libncurses.6.dylib" ]] || $FORCE_NCURSES; then
 	pushd ncurses-$NCURSES_VERSION >/dev/null
 
 	run ./configure --prefix="$RUNTIME_DIR" --with-shared --without-normal --without-cxx --without-cxx-binding \
-		--without-ada --without-manpages --without-progs --without-tests --enable-pc-files \
+		--without-ada --without-manpages --without-tests --enable-pc-files \
 		--without-develop --build=$DEPLOY_TARGET
 	run make -j$CONCURRENCY
 	run make install
@@ -526,20 +574,36 @@ elif [[ ! -e "$RUNTIME_DIR/lib/libncurses.6.dylib" ]] || $FORCE_NCURSES; then
 	popd >/dev/null
 	run rm -rf ncurses-$NCURSES_VERSION
 
-	run rm -f "$RUNTIME_DIR/lib"/{libpanel,libmenu}*
+	run rm -f "$RUNTIME_DIR/lib"/{libpanel}*
 	run rm -f "$RUNTIME_DIR/lib"/{libncurses,libform}*.a
 	run strip -S "$RUNTIME_DIR/lib/libncurses.6.dylib"
 	run strip -S "$RUNTIME_DIR/lib/libform.6.dylib"
+	run strip -S "$RUNTIME_DIR/lib/libmenu.6.dylib"
+	run strip -S "$RUNTIME_DIR/lib/libpanel.6.dylib"
 	run install_name_tool -id \
 		"@rpath/libncurses.6.dylib" \
 		"$RUNTIME_DIR/lib/libncurses.6.dylib"
 	run install_name_tool -id \
+		"@rpath/libmenu.6.dylib" \
+		"$RUNTIME_DIR/lib/libmenu.6.dylib"
+	run install_name_tool -id \
 		"@rpath/libform.6.dylib" \
 		"$RUNTIME_DIR/lib/libform.6.dylib"
+	run install_name_tool -id \
+		"@rpath/libpanel.6.dylib" \
+		"$RUNTIME_DIR/lib/libpanel.6.dylib"
 	run install_name_tool -change \
 		"$RUNTIME_DIR/lib/libncurses.6.dylib" \
 		"@rpath/libncurses.6.dylib" \
 		"$RUNTIME_DIR/lib/libform.6.dylib"
+	run install_name_tool -change \
+		"$RUNTIME_DIR/lib/libncurses.6.dylib" \
+		"@rpath/libncurses.6.dylib" \
+		"$RUNTIME_DIR/lib/libmenu.6.dylib"
+	run install_name_tool -change \
+		"$RUNTIME_DIR/lib/libncurses.6.dylib" \
+		"@rpath/libncurses.6.dylib" \
+		"$RUNTIME_DIR/lib/libpanel.6.dylib"
 	pushd "$RUNTIME_DIR/lib" >/dev/null
 	run ln -sf libncurses.6.dylib libtermcap.dylib
 
@@ -587,7 +651,9 @@ if $SKIP_GMP; then
 	echo "Skipped."
 elif [[ ! -e "$RUNTIME_DIR/lib/libgmp.10.dylib" ]] || $FORCE_GMP; then
 	run rm -f gmp-$GMP_VERSION.tar.bz2
-	run curl --fail -L -O https://gmplib.org/download/gmp/gmp-$GMP_VERSION.tar.bz2
+	# https://github.com/actions/runner-images/issues/7901
+	# GH Action runners are barred access to https://gmplib.org/download/gmp/gmp-$GMP_VERSION.tar.bz2
+	run curl --fail -L -O  https://ftp.gnu.org/gnu/gmp/gmp-$GMP_VERSION.tar.bz2
 	run tar xjf gmp-$GMP_VERSION.tar.bz2
 	run rm gmp-$GMP_VERSION.tar.bz2
 	echo "Entering $RUNTIME_DIR/gmp-$GMP_VERSION"
@@ -668,7 +734,7 @@ if $SKIP_SQLITE3; then
 	echo "Skipped."
 elif [[ ! -e "$RUNTIME_DIR/lib/libsqlite3.a" ]] || $FORCE_SQLITE3; then
 	download_and_extract sqlite-autoconf-$SQLITE3_VERSION.tar.gz \
-		https://www.sqlite.org/2020/sqlite-autoconf-$SQLITE3_VERSION.tar.gz
+		https://www.sqlite.org/$SQLITE3_VERSION_YEAR/sqlite-autoconf-$SQLITE3_VERSION.tar.gz
 	echo "Entering $RUNTIME_DIR/sqlite-autoconf-$SQLITE3_VERSION"
 	pushd sqlite-autoconf-$SQLITE3_VERSION >/dev/null
 
@@ -730,7 +796,8 @@ elif [[ ! -e "$RUNTIME_DIR/lib/libmysqlclient.a" ]] || $FORCE_MYSQL; then
 		-DCMAKE_C_FLAGS="-fPIC -fvisibility=hidden" \
 		-DCMAKE_CXX_FLAGS="-fPIC -fvisibility=hidden" . \
 		-DDISABLE_SHARED=1 \
-		-DCMAKE_VERBOSE_MAKEFILE=1
+		-DCMAKE_VERBOSE_MAKEFILE=1 \
+		-DCMAKE_OSX_ARCHITECTURES=$ARCHITECTURE -DCMAKE_MACOSX_DEPLOYMENT_TARGET=12.2
 	run make -j$CONCURRENCY libmysql
 	run make -C libmysql install
 	run make -C include install
@@ -740,17 +807,55 @@ elif [[ ! -e "$RUNTIME_DIR/lib/libmysqlclient.a" ]] || $FORCE_MYSQL; then
 	popd >/dev/null
 	run rm -rf mysql-connector-c-$MYSQL_LIB_VERSION-src
 	run lipo -info "$RUNTIME_DIR/lib/libmysqlclient.a"
+	# https://stackoverflow.com/a/44790834/11598969
+	run sed -i '' 's/^libs="$libs -l "*/libs="$libs -l mysqlclient "/' "$RUNTIME_DIR"/bin/mysql_config
 else
 	echo "Already installed."
 fi
 echo
+
+# header "Compiling runtime libraries 9/$TOTAL_LIBS: MySQL..."
+# if $SKIP_MYSQL; then
+# 	echo "Skipped."
+# elif [[ ! -e "$RUNTIME_DIR/lib/libmysqlclient.a" ]] || $FORCE_MYSQL; then
+# 	download_and_extract mysql-connector-c++-$MYSQL_LIB_VERSION-src.tar.gz \
+# 		https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-$MYSQL_LIB_VERSION-src.tar.gz
+# 	echo "Entering $RUNTIME_DIR/mysql-connector-c++-$MYSQL_LIB_VERSION-src"
+# 	pushd mysql-connector-c++-$MYSQL_LIB_VERSION-src >/dev/null
+
+# 	# We do not use internal/bin/cc and c++ because MySQL includes
+# 	# yassl, which has an OpenSSL compatibility layer. We want the
+# 	# yassl headers to be used, not the OpenSSL headers in the runtime.
+# 	run cmake -DCMAKE_INSTALL_PREFIX="$RUNTIME_DIR" \
+# 		-DCMAKE_C_COMPILER=/usr/bin/cc \
+# 		-DCMAKE_CXX_COMPILER=/usr/bin/c++ \
+# 		-DCMAKE_C_FLAGS="-fPIC -fvisibility=hidden" \
+# 		-DCMAKE_CXX_FLAGS="-fPIC -fvisibility=hidden" . \
+# 		-DDISABLE_SHARED=1 \
+# 		-DCMAKE_VERBOSE_MAKEFILE=1
+# 		# -DBUILD_STATIC=true \
+# 		# -DSTATIC_CONCPP=1
+# 	run cmake --build . --config=build_type
+# 	# run make -j$CONCURRENCY libmysql
+# 	# run make -C libmysql install
+# 	# run make -C include install
+# 	# run make -C scripts install
+
+# 	echo "Leaving source directory"
+# 	popd >/dev/null
+# 	run rm -rf mysql-connector-c++-$MYSQL_LIB_VERSION-src
+# 	run lipo -info "$RUNTIME_DIR/lib/libmysqlclient.a"
+# else
+# 	echo "Already installed."
+# fi
+# echo
 
 header "Compiling runtime libraries 10/$TOTAL_LIBS: PostgreSQL..."
 if $SKIP_POSTGRESQL; then
 	echo "Skipped."
 elif [[ ! -e "$RUNTIME_DIR/lib/libpq.a" ]] || $FORCE_POSTGRESQL; then
 	download_and_extract postgresql-$POSTGRESQL_VERSION.tar.bz2 \
-		https://ftp.postgresql.org/pub/source/v13.1/postgresql-$POSTGRESQL_VERSION.tar.bz2
+		https://ftp.postgresql.org/pub/source/v$POSTGRESQL_VERSION/postgresql-$POSTGRESQL_VERSION.tar.bz2
 	echo "Entering $RUNTIME_DIR/postgresql-$POSTGRESQL_VERSION"
 	pushd postgresql-$POSTGRESQL_VERSION >/dev/null
 
@@ -869,11 +974,12 @@ if $SKIP_LIBXSLT; then
 	echo "Skipped."
 elif [[ ! -e "$RUNTIME_DIR/lib/libxslt.a" ]] || $FORCE_LIBXSLT; then
 	# FIXME: getting a "Certificate can't be trusted" error while using HTTPS protocol
-	download_and_extract libxslt-$LIBXSLT_VERSION.tar.gz \
-		http://xmlsoft.org/download/libxslt-$LIBXSLT_VERSION.tar.gz
-	echo "Entering $RUNTIME_DIR/libxslt-$LIBXSLT_VERSION"
-	pushd libxslt-$LIBXSLT_VERSION >/dev/null
+	download_and_extract libxslt-v$LIBXSLT_VERSION.tar.gz \
+		https://gitlab.gnome.org/GNOME/libxslt/-/archive/v$LIBXSLT_VERSION/libxslt-v$LIBXSLT_VERSION.tar.gz
+	echo "Entering $RUNTIME_DIR/libxslt-v$LIBXSLT_VERSION"
+	pushd libxslt-v$LIBXSLT_VERSION >/dev/null
 
+	run ./autogen.sh
 	run ./configure --prefix="$RUNTIME_DIR" --disable-shared --enable-static \
 		--without-python --without-debug --without-debugger \
 		--without-profiler --build=$DEPLOY_TARGET \
@@ -887,7 +993,7 @@ elif [[ ! -e "$RUNTIME_DIR/lib/libxslt.a" ]] || $FORCE_LIBXSLT; then
 
 	echo "Leaving source directory"
 	popd >/dev/null
-	run rm -rf libxslt-$LIBXSLT_VERSION
+	run rm -rf libxslt-v$LIBXSLT_VERSION
 	run lipo -info "$RUNTIME_DIR/lib/libxslt.a"
 else
 	echo "Already installed."
