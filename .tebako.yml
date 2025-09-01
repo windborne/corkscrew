@@ -1,0 +1,6 @@
+options:
+  root: .
+  entry-point: corkscrew.rb
+  output: ./corkscrew
+  Ruby: 3.4.1
+  prefix: /tmp/tebako

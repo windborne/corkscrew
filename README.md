@@ -238,13 +238,46 @@ Run `sudo nginx -t` to test the nginx configuration, then run `sudo nginx -s` to
 3. Compatibility with existing tools. You should be able to deploy completely manually and not have it break things, and also be able to go outside the system whenever you want
 
 ### Packaging a new version
-Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/you54f/traveling-ruby).
-This enables us to distribute an executable without any dependencies: users don't need to worry about installing ruby or anything else.
-Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
-To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20230803](traveling-ruby/shared/gemfiles/20210107)) modified.
+Corkscrew is packaged into an executable with [Tebako](https://github.com/tamatebako/tebako?tab=readme-ov-file#press).
 
-To build, run either `rake package:osx` or `rake package:linux:x86_64`, or both with `rake package`.
-This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.
-OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
+To build for mac, run `tebako press`
 
-Once built, add it to github and to s3 (https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz)
+
+#### Tebako installation notes
+Run `gem install tebako`
+
+I also had to install:
+ - CMake
+ - gnu-sed
+ - boost
+ - libunwind-headers 
+ - libevent
+
+And I had to build gflags:
+```
+git clone https://github.com/gflags/gflags.git
+cd gflags
+mkdir build
+cmake .. \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DGFLAGS_BUILD_STATIC_LIBS=ON \
+        -DGFLAGS_BUILD_gflags_nothreads_LIB=ON \
+        -DCMAKE_INSTALL_PREFIX=$HOME/.tebako/deps
+cmake --build . --target insta
+```
+
+And I had to build boost from source:
+```
+git clone --branch boost-1.78.0 --recurse-submodules https://github.com/boostorg/boost.git
+cd boost
+./bootstrap.sh --prefix=$HOME/.tebako/deps
+./b2 install cxxflags="-Wno-enum-constexpr-conversion -Wno-deprecated-declarations" --with-thread --with-chrono --with-iostreams --with-program_options --with-system
+```
+
+I also had to set:
+```bash
+export BOOST_ROOT=$HOME/.tebako/deps
+export BOOST_INCLUDEDIR=$HOME/.tebako/deps/include
+export BOOST_LIBRARYDIR=$HOME/.tebako/deps/lib
+export CMAKE_PREFIX_PATH=$HOME/.tebako/deps
+```

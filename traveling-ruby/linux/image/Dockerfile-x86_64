@@ -1,3 +1,0 @@
-FROM --platform=linux/amd64 phusion/holy-build-box:3.0
-ADD . /tr_build
-RUN env ARCHITECTURE=x86_64 /tr_build/install.sh
