@@ -48,14 +48,48 @@ module Corkscrew
         source = @config.root_dir
         source += '/' unless source.end_with?('.') || source.end_with?('/')
 
+        # flags = [
+        #   '-avzhP',
+        #   '--include=**.gitignore',
+        #   '--exclude=/.git',
+        #   '--filter=:- .gitignore',
+        #   '--delete-after',
+        #   '--delete'
+        # ]
+        #
+        # ignored = CommandRunner.run_locally('git ls-files --ignored --exclude-standard -o', cwd: @config.root_dir, print_output: false).split("\n")
+        #
+        # # Add protect rules for each ignored file
+        # ignored.each do |path|
+        #   flags << "--filter=P #{path}"
+        # end
+
         flags = [
           '-avzhP',
-          '--include=**.gitignore',
+          '--include=**/.gitignore',
           '--exclude=/.git',
-          '--filter=:- .gitignore',
           '--delete-after',
           '--delete'
         ]
+
+        # List ignored/untracked files
+        ignored = CommandRunner.run_locally(
+          "git ls-files --ignored --exclude-standard -o",
+          cwd: @config.root_dir,
+          print_output: false
+        ).split("\n")
+
+        # Write protect rules into a temp file
+        require "tempfile"
+        filter_file = Tempfile.new("rsync-filters")
+        ignored.each do |path|
+          filter_file.puts("- #{path}") # exclude so it isn't copied
+          filter_file.puts("P #{path}") # but protect so it isn't deleted
+        end
+        filter_file.flush
+
+        # Add the filter file to rsync flags
+        flags << "--filter=. #{filter_file.path}"
 
         unless @config.ssh['identity'].nil? || @config.ssh['identity'].empty?
           flags += [
