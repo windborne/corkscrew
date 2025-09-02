@@ -8,13 +8,18 @@ TRAVELING_RUBY_VERSION = "20250625-3.4.5"
 
 # right now you can only package on the same architecture you'll deploy to
 desc "Package your app"
-task :package => ['package:linux:x86_64', 'package:osx:x86_64', 'package:osx:arm64']
+task :package => ['package:linux:x86_64', 'package:linux:arm64', 'package:osx:x86_64', 'package:osx:arm64']
 
 namespace :package do
   namespace :linux do
     desc "Package your app for Linux x86_64"
     task :x86_64 => [:bundle_install] do
       create_package("linux-x86_64")
+    end
+
+    desc "Package your app for Linux arm64"
+    task :arm64 => [:bundle_install] do
+      create_package("linux-arm64")
     end
   end
 

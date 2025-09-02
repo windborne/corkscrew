@@ -8,6 +8,9 @@ packaging/vendor
 packaging/traveling-ruby-*
 packaging/corkscrew-*
 packaging/.env
+packaging/debs
+packaging/gpg
+!packaging/gpg/public.asc
 
 rubyc
 

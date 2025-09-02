@@ -22,22 +22,30 @@ brew tap windborne/corkscrew
 brew install corkscrew-deploys
 ```
 
-1. Download the file from the [releases page](https://github.com/windborne/corkscrew/releases) or (on a remote machine) `wget https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz`
-2. Untar it
-3. Add it to your path or link it to somewhere in your path already
+On Debian/Ubuntu via APT:
 
-For example:
-```shell
-tar -xzf corkscrew-LATEST-osx-x86_64.tar.gz -C /usr/local/lib/
-ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
+```bash
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL 'https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/apt/public.asc' | sudo gpg --dearmor -o /etc/apt/keyrings/corkscrew.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/corkscrew.gpg] https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/apt/debs ./' | sudo tee /etc/apt/sources.list.d/corkscrew.list >/dev/null
+sudo apt update
+sudo apt install corkscrew-deploys
 ```
 
-## Updating
+You can run `corkscrew --version` to verify it's installed.
+
+### Updating
 
 On mac:
 ```bash
 brew update
 brew upgrade corkscrew-deploys
+```
+
+On Debian/Ubuntu:
+```bash
+sudo apt update
+sudo apt install --only-upgrade corkscrew-deploys
 ```
 
 ## Basic usage
@@ -252,24 +260,30 @@ Run `sudo nginx -t` to test the nginx configuration, then run `sudo nginx -s` to
 3. Compatibility with existing tools. You should be able to deploy completely manually and not have it break things, and also be able to go outside the system whenever you want
 
 ### Packaging a new version
+
+1. Update [corkscrew/version.rb](corkscrew/version.rb)
+2. Run `rake:package`. Requires that you be on mac to build for mac
+3. Run `bash packaging/distribute.sh` to push all the built artifacts to brew and s3. Requires packaging/.env and packaging/gpg for credentials.
+4. Add a new release on [github](https://github.com/windborne/corkscrew/releases/new)
+
+#### Background
 Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/you54f/traveling-ruby).
 This enables us to distribute an executable without any dependencies: users don't need to worry about installing ruby or anything else.
 Unfortunately, because we use gems with native extensions, we cannot use the pre-compiled traveling ruby binaries, and instead need to compile it ourselves.
 To this end, traveling-ruby is cloned within this repository and the Gemfile (within [traveling-ruby/shared/gemfiles/20230803](traveling-ruby/shared/gemfiles/20210107)) modified.
 In order to cross-compile for `x86_64` from `arm64` hosts, you must install Rosetta (`sudo softwareupdate --install-rosetta --agree-to-license`).
 
-To build, run either `rake package:osx` or `rake package:linux:x86_64`, or both with `rake package`.
-This requires that you have the traveling rubies built: you can read the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for instructions on how.
 OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
-
-Once built, add it to github and to s3 (https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz)
 
 #### Useful commands
 - `rake package` builds everything
-- `bash packaging/upload_artifacts.sh` uploads to s3
+- `rake package:osx:arm64`, `rake package:osx:x86_64`, `rake package:linux:x86_64`, and `rake package:linux:arm64` build for the specified platforms 
+- `bash packaging/upload_artifacts.sh` uploads to s3, including .deb stuff
 - `bash packaging/update_brew.sh` updates the brew formula locally
 - `bash packaging/push_brew.sh` updates the brew formula remotely. Must be run after `update_brew.sh`
 - `bash packaging/local_brew.sh --package` installs the brew formula locally for testing
+- `bash packaging/build_deb.sh` generates .deb files
+- `bash packaging/test_apt_install.sh` tests that the apt install was successful
 
 ### Updating traveling ruby
 
@@ -292,11 +306,14 @@ gem 'bcrypt_pbkdf', '1.1.0'
 ```
 
 **3. Build base binaries**
+
 Clean up the RUBY_VERSIONS_*.txt files so that we don't build unnecessary ruby versions.
 
 In `traveling-ruby/osx`, run `ARCHITECTURES=arm64 rake` and `ARCHITECTURES=x86_64 rake`.
 
 In `traveling-ruby/linux`, run `rake`.
+
+See the [osx](traveling-ruby/osx/README.md) and [linux](traveling-ruby/linux/README.md) readmes for more info.
 
 **4. Update configs**
 You will also need to edit `Rakefile`.

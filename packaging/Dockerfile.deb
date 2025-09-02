@@ -1,0 +1,34 @@
+FROM debian:bookworm-slim
+
+ARG INCLUDE_DPKG_DEV=0
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    APP_NAME=corkscrew
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    bash \
+    ruby \
+    rubygems \
+    build-essential \
+    rpm \
+    gnupg \
+    debsigs \
+    xz-utils \
+    ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# Optionally include dpkg-dev and apt-utils (apt-ftparchive) for Packages/Release
+RUN if [ "$INCLUDE_DPKG_DEV" = "1" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends dpkg-dev apt-utils gzip && rm -rf /var/lib/apt/lists/*; \
+    fi
+
+# Install fpm
+RUN gem install --no-document fpm:1.15.1
+
+WORKDIR /work
+COPY package_deb_internal.sh /usr/local/bin/build-deb
+RUN chmod +x /usr/local/bin/build-deb
+ENTRYPOINT ["/usr/local/bin/build-deb"]
+
+
