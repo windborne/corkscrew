@@ -67,7 +67,7 @@ def create_package(target)
   sh "cp Gemfile Gemfile.lock #{package_dir}/lib/vendor/"
   sh "mkdir #{package_dir}/lib/vendor/.bundle"
   sh "cp packaging/bundler-config #{package_dir}/lib/vendor/.bundle/config"
-  %w[bcrypt_pbkdf-1.1.1 ed25519-1.4.0].each do |gem|
+  %w[bcrypt_pbkdf-1.1.0 ed25519-1.3.0].each do |gem|
     sh "tar -xzf traveling-ruby/#{target.split('-').first}/traveling-ruby-gems-#{TRAVELING_RUBY_VERSION}-#{target}/#{gem}.tar.gz " +
          "-C #{package_dir}/lib/vendor/ruby"
   end

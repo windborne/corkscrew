@@ -7,6 +7,7 @@ test/dumb_server/dumb_server_remote.service
 packaging/vendor
 packaging/traveling-ruby-*
 packaging/corkscrew-*
+packaging/.env
 
 rubyc
 

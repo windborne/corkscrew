@@ -16,6 +16,12 @@ corkscrew deploy
 ```
 
 ## Installation
+On mac:
+```bash
+brew tap windborne/corkscrew
+brew install corkscrew-deploys
+```
+
 1. Download the file from the [releases page](https://github.com/windborne/corkscrew/releases) or (on a remote machine) `wget https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz`
 2. Untar it
 3. Add it to your path or link it to somewhere in your path already
@@ -24,6 +30,14 @@ For example:
 ```shell
 tar -xzf corkscrew-LATEST-osx-x86_64.tar.gz -C /usr/local/lib/
 ln -s /usr/local/lib/corkscrew/corkscrew /usr/local/bin/corkscrew
+```
+
+## Updating
+
+On mac:
+```bash
+brew update
+brew upgrade corkscrew-deploys
 ```
 
 ## Basic usage
@@ -250,7 +264,14 @@ OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
 
 Once built, add it to github and to s3 (https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-LATEST-linux-x86_64.tar.gz)
 
-#### Updating traveling ruby
+#### Useful commands
+- `rake package` builds everything
+- `bash packaging/upload_artifacts.sh` uploads to s3
+- `bash packaging/update_brew.sh` updates the brew formula locally
+- `bash packaging/push_brew.sh` updates the brew formula remotely. Must be run after `update_brew.sh`
+- `bash packaging/local_brew.sh --package` installs the brew formula locally for testing
+
+### Updating traveling ruby
 
 Sometimes you will want to update traveling ruby, eg to modernize the underlying ruby version.
 Since we have it copied without git, this requires the following.
@@ -266,11 +287,13 @@ rm -rf traveling-ruby/.git
 Then, edit `traveling-ruby/shared/gemfiles/*/Gemfile`:
 ```
 # comment everything out then add
-gem 'ed25519', '>= 1.2', '< 2.0'
-gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
+gem 'ed25519', '1.3.0'
+gem 'bcrypt_pbkdf', '1.1.0'
 ```
 
 **3. Build base binaries**
+Clean up the RUBY_VERSIONS_*.txt files so that we don't build unnecessary ruby versions.
+
 In `traveling-ruby/osx`, run `ARCHITECTURES=arm64 rake` and `ARCHITECTURES=x86_64 rake`.
 
 In `traveling-ruby/linux`, run `rake`.
