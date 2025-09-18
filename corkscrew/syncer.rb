@@ -1,5 +1,6 @@
 require 'json'
 require 'thor'
+require 'pathname'
 require_relative './command_runner'
 require_relative 'helpers/query_helpers'
 
@@ -48,44 +49,17 @@ module Corkscrew
         source = @config.root_dir
         source += '/' unless source.end_with?('.') || source.end_with?('/')
 
-        # flags = [
-        #   '-avzhP',
-        #   '--include=**.gitignore',
-        #   '--exclude=/.git',
-        #   '--filter=:- .gitignore',
-        #   '--delete-after',
-        #   '--delete'
-        # ]
-        #
-        # ignored = CommandRunner.run_locally('git ls-files --ignored --exclude-standard -o', cwd: @config.root_dir, print_output: false).split("\n")
-        #
-        # # Add protect rules for each ignored file
-        # ignored.each do |path|
-        #   flags << "--filter=P #{path}"
-        # end
-
         flags = [
           '-avzhP',
-          '--include=**/.gitignore',
           '--exclude=/.git',
           '--delete-after',
           '--delete'
         ]
 
-        # List ignored/untracked files
-        ignored = CommandRunner.run_locally(
-          "git ls-files --ignored --exclude-standard -o",
-          cwd: @config.root_dir,
-          print_output: false
-        ).split("\n")
-
-        # Write protect rules into a temp file
+        # Build an rsync filter file derived from all .gitignore files
         require "tempfile"
         filter_file = Tempfile.new("rsync-filters")
-        ignored.each do |path|
-          filter_file.puts("- #{path}") # exclude so it isn't copied
-          filter_file.puts("P #{path}") # but protect so it isn't deleted
-        end
+        build_rsync_filter_file_from_gitignores(filter_file)
         filter_file.flush
 
         # Add the filter file to rsync flags
@@ -152,6 +126,84 @@ module Corkscrew
           modified_files: modified_files,
           synced_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S%z")
         }
+      end
+
+      # Build rsync filter rules from all .gitignore files in the project.
+      # - Skips commented and blank lines
+      # - Handles negations starting with '!'
+      # - For ignored entries: exclude and protect (so --delete doesn't remove them remotely)
+      # - For negated entries: include the path so they are transferred
+      def build_rsync_filter_file_from_gitignores(io)
+        project_root = File.expand_path(@config.root_dir)
+
+        gitignore_paths = Dir.glob(File.join(project_root, '**', '.gitignore'))
+        root_gitignore = File.join(project_root, '.gitignore')
+        gitignore_paths << root_gitignore if File.exist?(root_gitignore) && !gitignore_paths.include?(root_gitignore)
+        gitignore_paths.reject! { |p| p.include?(File.join(project_root, '.git', '')) }
+
+        include_rules = []
+        exclude_rules = []
+
+        gitignore_paths.sort.each do |gitignore_path|
+          base_dir = File.dirname(gitignore_path)
+          base_rel = Pathname(base_dir).relative_path_from(Pathname(project_root)).to_s
+          base_rel = '' if base_rel == '.'
+
+          File.foreach(gitignore_path, chomp: true) do |line|
+            stripped = line.strip
+            next if stripped.empty? || stripped.start_with?('#')
+
+            negated = stripped.start_with?('!')
+            pattern = negated ? stripped[1..-1] : stripped
+
+            is_dir = pattern.end_with?('/')
+            pattern = pattern.chomp('/') if is_dir
+
+            # Build patterns relative to project root respecting .gitignore semantics:
+            # - leading '/' anchors to the directory containing the .gitignore
+            # - otherwise it can match in subdirectories, so prefix '**/' under the base
+            rel_patterns = []
+            if pattern.start_with?('/')
+              anchored = pattern.sub(%r{^/+}, '')
+              rel_patterns << File.join(base_rel, anchored)
+            else
+              if base_rel.empty?
+                rel_patterns << File.join('**', pattern)
+              else
+                rel_patterns << File.join(base_rel, pattern)
+                rel_patterns << File.join(base_rel, '**', pattern)
+              end
+            end
+
+            rel_patterns.each do |rel|
+              # Normalize multiple slashes
+              rel = rel.gsub(%r{/+}, '/').sub(%r{^\./}, '')
+
+              if negated
+                if is_dir
+                  include_rules << "+ #{rel}/"
+                else
+                  include_rules << "+ #{rel}"
+                end
+              else
+                # Exclude and protect ignored paths so remote artifacts are not deleted
+                if is_dir
+                  exclude_rules << "P #{rel}/"
+                  exclude_rules << "P #{rel}/***"
+                  exclude_rules << "- #{rel}/"
+                  exclude_rules << "- #{rel}/***"
+                else
+                  exclude_rules << "P #{rel}"
+                  exclude_rules << "- #{rel}"
+                end
+              end
+            end
+          end
+        end
+
+        # Write includes first so they can override excludes when needed
+        include_rules.uniq.each { |r| io.puts(r) }
+        exclude_rules.uniq.each { |r| io.puts(r) }
       end
 
     end
