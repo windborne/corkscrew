@@ -1,5 +1,5 @@
 
-VERSION = '1.2.0'
+VERSION = '1.2.2'
 
 class CorkscrewDeploys < Formula
   desc "Deploy and run code on another machine"
@@ -8,10 +8,10 @@ class CorkscrewDeploys < Formula
 
   if Hardware::CPU.intel?
     url "https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-#{VERSION}-osx-x86_64.tar.gz"
-    sha256 "e10c6237084d40db5c2f15a26af55e95b7ca6fa6c6993a604d5f2a35f6b7a374"
+    sha256 "a1a4b6bd8e5b6594e0ae6235a4140aaa22543f0d3a0e6dc033fd672c6a4aac5f"
   else
     url "https://wb-data-public.s3.us-west-2.amazonaws.com/corkscrew/corkscrew-#{VERSION}-osx-arm64.tar.gz"
-    sha256 "230003b60bfdf851d23ee83d2c94598595ce1e82a82816dc7d93fa0a94a42cec"
+    sha256 "4dca3c1d894d51191c00660f1b13d8bdc8dd23329cf8fa4d3750a50cdf7c4695"
   end
 
   def install

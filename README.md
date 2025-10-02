@@ -208,6 +208,9 @@ However, we include a full list of options here for reference.
    "deploy_path": "/srv/", // where to sync the code to on the remote host. If not provided, you won't be able to deploy
    "install": "install.sh", // the install script. May be a file or a bash command. Optional
    "build": "build.sh", // the build script. May be a file or a bash command. Optional
+   "restart_command": "custom command", // a custom command to restart the service. Optional
+   "start_command": "custom command", // a custom command to start the service. Optional
+   "stop_command": "custom command", // a custom command to stop the service. Optional
    "environment_file": ".env", // An environment file for systemd. Optional
    "nginx": { // optional config to set up nginx
       "port": 0000, // port the server runs on

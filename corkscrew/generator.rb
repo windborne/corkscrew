@@ -46,6 +46,11 @@ module Corkscrew
             'install_screen_template.sh.erb',
             @config.install
           )
+        elsif @config.service_manager == 'none'
+          template(
+            'install_blank_template.sh.erb',
+            @config.install
+          )
         else
           raise 'Invalid service manager'
         end
@@ -70,7 +75,7 @@ module Corkscrew
 
         name = ask_nonempty("Name of service (snake_case strongly recommended):")
         run = ask_nonempty("Start command (eg `python3 main.py`):")
-        service_manager = ask("Service manager:", limited_to: %w[systemd screen], default: 'systemd')
+        service_manager = ask("Service manager:", limited_to: %w[systemd screen none], default: 'systemd')
         has_ssh = ask_default_yes("Has a remote host [Yn]:")
         ssh_user = has_ssh ? ask_nonempty("SSH user:") : nil
         ssh_host = has_ssh ? ask_nonempty("SSH host:") : nil

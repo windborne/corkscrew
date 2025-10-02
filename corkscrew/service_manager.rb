@@ -10,7 +10,9 @@ module Corkscrew
     end
 
     def restart
-      if @config.service_manager == 'systemd'
+      if @config.restart_command
+        @command_runner.run_command(@config.restart_command)
+      elsif @config.service_manager == 'systemd'
         if @config.zero_downtime_deployments?
           # figure out which service is currently running
           # start the other one
@@ -53,7 +55,9 @@ module Corkscrew
     end
 
     def start
-      if @config.service_manager == 'systemd'
+      if @config.start_command
+        @command_runner.run_command(@config.start_command)
+      elsif @config.service_manager == 'systemd'
         @command_runner.run_command("sudo systemctl start #{service_name}") unless @config.zero_downtime_deployments? && blue_up?
       elsif @config.service_manager == 'screen'
         @command_runner.run_command("bash start_screen.sh", cwd: @config.run_path)
@@ -63,7 +67,9 @@ module Corkscrew
     end
 
     def stop
-      if @config.service_manager == 'systemd'
+      if @config.stop_command
+        @command_runner.run_command(@config.stop_command)
+      elsif @config.service_manager == 'systemd'
         @command_runner.run_command("sudo systemctl stop #{service_name}")
         @command_runner.run_command("sudo systemctl stop #{blue_service_name}") if @config.zero_downtime_deployments?
       elsif @config.service_manager == 'screen'

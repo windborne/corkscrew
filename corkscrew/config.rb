@@ -93,7 +93,7 @@ module Corkscrew
     end
 
     def no_nginx?
-      nginx.nil? || nginx.empty?
+      fetch('nginx').nil? || fetch('nginx').empty?
     end
 
     def has_nginx?
@@ -185,10 +185,24 @@ module Corkscrew
       }.compact
     end
 
-    def fetch(name)
+    def restart_command
+      fetch('restart_command', make_nil: true)
+    end
+
+    def start_command
+      fetch('start_command', make_nil: true)
+    end
+
+    def stop_command
+      fetch('stop_command', make_nil: true)
+    end
+
+    def fetch(name, make_nil: false)
       name = name.to_s
 
       return @defaults[name] if !@raw.key?(name) && @defaults.key?(name)
+
+      return nil if @raw[name] == '' && make_nil
 
       @raw[name]
     end
