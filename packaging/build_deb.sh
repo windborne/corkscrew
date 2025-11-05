@@ -118,9 +118,12 @@ echo "Artifacts in: $packaging_dir/debs"
 echo "Generating Packages and Packages.gz for flat APT repo ..."
 # Generate Packages and Packages.gz for flat APT repo
 if command -v docker >/dev/null 2>&1; then
-  docker run --rm --entrypoint /bin/bash -e LC_ALL=C -v "$packaging_dir/debs":/repo -w /repo "$indexer_image_tag" -lc "dpkg-scanpackages . /dev/null > Packages && gzip -n -c -f -9 Packages > Packages.gz"
+  docker run --rm --entrypoint /bin/bash -e LC_ALL=C -v "$packaging_dir/debs":/repo -w /repo "$indexer_image_tag" -lc ': > Packages; for a in amd64 arm64; do dpkg-scanpackages -a "$a" . /dev/null >> Packages; done; gzip -n -c -f -9 Packages > Packages.gz'
 elif command -v dpkg-scanpackages >/dev/null 2>&1; then
-  LC_ALL=C dpkg-scanpackages "$packaging_dir/debs" /dev/null > "$packaging_dir/debs/Packages"
+  : > "$packaging_dir/debs/Packages"
+  for arch in amd64 arm64; do
+    LC_ALL=C dpkg-scanpackages -a "$arch" "$packaging_dir/debs" /dev/null >> "$packaging_dir/debs/Packages"
+  done
   gzip -n -c -f -9 "$packaging_dir/debs/Packages" > "$packaging_dir/debs/Packages.gz"
 else
   echo "Warning: neither docker nor dpkg-scanpackages available; skipping Packages index generation" >&2
