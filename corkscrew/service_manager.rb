@@ -130,7 +130,8 @@ module Corkscrew
     end
 
     def check_port_up(port)
-      @command_runner.run_command("curl -s -o /dev/null -w \"%{http_code}\" --head --connect-timeout 5 http://localhost:#{port}", print_output: false)&.start_with?('2')
+      status_code = @command_runner.run_command("curl -s -o /dev/null -w \"%{http_code}\" --head --connect-timeout 5 http://localhost:#{port}", print_output: false)
+      status_code&.start_with?('2') || status_code&.start_with?('3')
     end
 
   end
