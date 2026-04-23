@@ -14,3 +14,6 @@ gem 'thor'
 gem 'base64'
 
 gem 'logger'
+
+gem 'reline', '0.6.0'
+gem 'io-console', '0.8.1'
