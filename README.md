@@ -265,9 +265,9 @@ Run `sudo nginx -t` to test the nginx configuration, then run `sudo nginx -s` to
 ### Packaging a new version
 
 1. Update [corkscrew/version.rb](corkscrew/version.rb)
-2. Run `rake:package`. Requires that you be on mac to build for mac
-3. Run `bash packaging/distribute.sh` to push all the built artifacts to brew and s3. Requires packaging/.env and packaging/gpg for credentials.
-4. Add a new release on [github](https://github.com/windborne/corkscrew/releases/new)
+2. Commit the version change and any other source changes intended for the release.
+3. Run `rake package`. Requires that you be on mac to build for mac.
+4. Run `bash packaging/distribute.sh`. It publishes the built artifacts to S3 and Homebrew, creates and pushes the `v<version>` tag, creates the GitHub release, and uploads the four versioned tarballs. Requires `packaging/.env`, `packaging/gpg`, and GitHub CLI authentication.
 
 #### Background
 Corkscrew is packaged into an executable with [Traveling Ruby](https://github.com/you54f/traveling-ruby).
@@ -284,6 +284,7 @@ OSX can only be built on OSX; linux (as it's dockerized) can be run on either.
 - `bash packaging/upload_artifacts.sh` uploads to s3, including .deb stuff
 - `bash packaging/update_brew.sh` updates the brew formula locally
 - `bash packaging/push_brew.sh` updates the brew formula remotely. Must be run after `update_brew.sh`
+- `bash packaging/create_github_release.sh` creates the version tag and GitHub release, and uploads the release tarballs
 - `bash packaging/local_brew.sh --package` installs the brew formula locally for testing
 - `bash packaging/build_deb.sh` generates .deb files
 - `bash packaging/test_apt_install.sh` tests that the apt install was successful
