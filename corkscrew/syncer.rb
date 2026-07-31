@@ -1,6 +1,7 @@
 require 'json'
 require 'thor'
 require 'pathname'
+require 'find'
 require_relative './command_runner'
 require_relative 'helpers/query_helpers'
 
@@ -52,6 +53,7 @@ module Corkscrew
         flags = [
           '-avzhP',
           '--exclude=/.git',
+          '--prune-empty-dirs',
           '--delete-after',
           '--delete'
         ]
@@ -128,82 +130,196 @@ module Corkscrew
         }
       end
 
-      # Build rsync filter rules from all .gitignore files in the project.
-      # - Skips commented and blank lines
-      # - Handles negations starting with '!'
-      # - For ignored entries: exclude and protect (so --delete doesn't remove them remotely)
-      # - For negated entries: include the path so they are transferred
+      # Translate Git ignore rules to rsync filters without enumerating ignored
+      # files. Git uses the last matching rule, while rsync uses the first, so
+      # rules are emitted in reverse precedence order.
       def build_rsync_filter_file_from_gitignores(io)
         project_root = File.expand_path(@config.root_dir)
+        rules = []
 
-        gitignore_paths = Dir.glob(File.join(project_root, '**', '.gitignore'))
-        root_gitignore = File.join(project_root, '.gitignore')
-        gitignore_paths << root_gitignore if File.exist?(root_gitignore) && !gitignore_paths.include?(root_gitignore)
-        gitignore_paths.reject! { |p| p.include?(File.join(project_root, '.git', '')) }
+        gitignore_sources(project_root).each do |source|
+          File.foreach(source[:path], chomp: true) do |line|
+            parsed = parse_gitignore_line(line)
+            next if parsed.nil?
 
-        include_rules = []
-        exclude_rules = []
-
-        gitignore_paths.sort.each do |gitignore_path|
-          base_dir = File.dirname(gitignore_path)
-          base_rel = Pathname(base_dir).relative_path_from(Pathname(project_root)).to_s
-          base_rel = '' if base_rel == '.'
-
-          File.foreach(gitignore_path, chomp: true) do |line|
-            stripped = line.strip
-            next if stripped.empty? || stripped.start_with?('#')
-
-            negated = stripped.start_with?('!')
-            pattern = negated ? stripped[1..-1] : stripped
-
-            is_dir = pattern.end_with?('/')
-            pattern = pattern.chomp('/') if is_dir
-
-            # Build patterns relative to project root respecting .gitignore semantics:
-            # - leading '/' anchors to the directory containing the .gitignore
-            # - otherwise it can match in subdirectories, so prefix '**/' under the base
-            rel_patterns = []
-            if pattern.start_with?('/')
-              anchored = pattern.sub(%r{^/+}, '')
-              rel_patterns << File.join(base_rel, anchored)
-            else
-              if base_rel.empty?
-                rel_patterns << File.join('**', pattern)
-              else
-                rel_patterns << File.join(base_rel, pattern)
-                rel_patterns << File.join(base_rel, '**', pattern)
-              end
-            end
-
-            rel_patterns.each do |rel|
-              # Normalize multiple slashes
-              rel = rel.gsub(%r{/+}, '/').sub(%r{^\./}, '')
-
-              if negated
-                if is_dir
-                  include_rules << "+ #{rel}/"
-                else
-                  include_rules << "+ #{rel}"
-                end
-              else
-                # Exclude and protect ignored paths so remote artifacts are not deleted
-                if is_dir
-                  exclude_rules << "P #{rel}/"
-                  exclude_rules << "P #{rel}/***"
-                  exclude_rules << "- #{rel}/"
-                  exclude_rules << "- #{rel}/***"
-                else
-                  exclude_rules << "P #{rel}"
-                  exclude_rules << "- #{rel}"
-                end
-              end
-            end
+            rules << {
+              negated: parsed[:negated],
+              patterns: rsync_patterns_for_gitignore(
+                parsed[:pattern],
+                source[:base_rel],
+                parsed[:directory_only],
+                parsed[:anchored]
+              )
+            }
           end
         end
 
-        # Write includes first so they can override excludes when needed
-        include_rules.uniq.each { |r| io.puts(r) }
-        exclude_rules.uniq.each { |r| io.puts(r) }
+        rules.reverse_each do |rule|
+          rule[:patterns].each do |pattern|
+            if rule[:negated]
+              io.puts("+ #{pattern}")
+            else
+              # P applies on the receiver, preserving ignored runtime files
+              # when --delete is enabled. The exclude applies on the sender.
+              io.puts("P #{pattern}")
+              io.puts("- #{pattern}")
+            end
+          end
+        end
+      end
+
+      def gitignore_sources(project_root)
+        sources = git_exclude_sources(project_root)
+        gitignore_paths = []
+
+        Find.find(project_root) do |path|
+          if File.directory?(path) && File.basename(path) == '.git'
+            Find.prune
+          elsif File.file?(path) && File.basename(path) == '.gitignore'
+            gitignore_paths << path
+          end
+        end
+
+        gitignore_paths.sort_by do |path|
+          relative = Pathname(path).relative_path_from(Pathname(project_root)).to_s
+          [relative.count(File::SEPARATOR), relative]
+        end.each do |path|
+          base_rel = Pathname(File.dirname(path))
+            .relative_path_from(Pathname(project_root))
+            .to_s
+          base_rel = '' if base_rel == '.'
+          sources << { path: path, base_rel: base_rel }
+        end
+
+        sources
+      end
+
+      # Git's repository and configured global exclude files have lower
+      # precedence than every per-directory .gitignore file.
+      def git_exclude_sources(project_root)
+        git_dir = CommandRunner.run_locally(
+          'git',
+          'rev-parse',
+          '--git-dir',
+          cwd: project_root,
+          print_output: false
+        ).strip
+        return [] if git_dir.empty? || git_dir.start_with?('fatal:')
+
+        sources = []
+        global_excludes = CommandRunner.run_locally(
+          'git',
+          'config',
+          '--path',
+          '--get',
+          'core.excludesFile',
+          cwd: project_root,
+          print_output: false
+        ).strip
+        if !global_excludes.empty? && File.file?(global_excludes)
+          sources << { path: global_excludes, base_rel: '' }
+        end
+
+        git_dir = File.expand_path(git_dir, project_root)
+        repository_excludes = File.join(git_dir, 'info', 'exclude')
+        if File.file?(repository_excludes)
+          sources << { path: repository_excludes, base_rel: '' }
+        end
+
+        sources
+      end
+
+      def parse_gitignore_line(line)
+        line = remove_unescaped_trailing_spaces(line)
+        return nil if line.empty? || line.start_with?('#')
+
+        negated = line.start_with?('!')
+        line = line[1..-1] if negated
+        return nil if line.nil? || line.empty?
+
+        directory_only = line.end_with?('/')
+        line = line[0...-1] if directory_only
+        anchored = line.start_with?('/')
+        line = line[1..-1] if anchored
+        return nil if line.nil? || line.empty?
+
+        {
+          negated: negated,
+          pattern: translate_gitignore_escapes(line),
+          directory_only: directory_only,
+          anchored: anchored
+        }
+      end
+
+      def remove_unescaped_trailing_spaces(line)
+        while line.end_with?(' ')
+          backslash_count = 0
+          index = line.length - 2
+          while index >= 0 && line[index] == '\\'
+            backslash_count += 1
+            index -= 1
+          end
+
+          break if backslash_count.odd?
+          line = line[0...-1]
+        end
+        line
+      end
+
+      def translate_gitignore_escapes(pattern)
+        translated = ''
+        index = 0
+
+        while index < pattern.length
+          if pattern[index] == '\\' && index + 1 < pattern.length
+            escaped = pattern[index + 1]
+            if ['*', '?', '[', '\\'].include?(escaped)
+              translated << '\\' << escaped
+            else
+              translated << escaped
+            end
+            index += 2
+          else
+            translated << pattern[index]
+            index += 1
+          end
+        end
+
+        translated
+      end
+
+      def rsync_patterns_for_gitignore(pattern, base_rel, directory_only, anchored)
+        contains_slash = pattern.include?('/')
+        patterns = if !anchored && !contains_slash && base_rel.empty?
+                     [pattern]
+                   elsif !anchored && !contains_slash
+                     [
+                       "/#{base_rel}/#{pattern}",
+                       "/#{base_rel}/**/#{pattern}"
+                     ]
+                   else
+                     relative = [base_rel, pattern].reject(&:empty?).join('/')
+                     ["/#{relative}"]
+                   end
+
+        patterns = patterns.flat_map { |item| expand_zero_depth_double_stars(item) }
+        patterns.map! { |item| directory_only ? "#{item}/" : item }
+        patterns.uniq
+      end
+
+      # rsync 2.6.9 does not let a leading **/ match at the transfer root.
+      # Git's **/ can match zero directories, so emit that form explicitly.
+      def expand_zero_depth_double_stars(pattern)
+        patterns = [pattern]
+        index = 0
+
+        while index < patterns.length
+          expanded = patterns[index].sub('/**/', '/')
+          patterns << expanded unless expanded == patterns[index] || patterns.include?(expanded)
+          index += 1
+        end
+
+        patterns
       end
 
     end
